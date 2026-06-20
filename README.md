@@ -37,6 +37,21 @@ compartida `X-Hermes-Internal-Key` (constante en `hermes-shared`).
 - Las relaciones con otros contextos son por **UUID vía HTTP**, no por claves
   foráneas cruzadas → el contexto es autónomo.
 
+## Clave de firma JWT (perfil local)
+La clave RSA con que el auth-server firma los JWT es un **secreto** y **no se
+versiona** (quien la tenga puede falsificar tokens). En local se gestiona así:
+
+- Se genera **una vez por máquina** en `.local-jwk/` (en `.gitignore`) con la
+  tarea `./gradlew :hermes-auth-server:generateLocalJwk` (se ejecuta sola en
+  `bootRun` y en `hermes-stack.sh up`).
+- `bootRun` y el orquestador la cargan en `HERMES_AUTH_JWK_*` → la firma es
+  **estable entre reinicios** (los tokens siguen validando).
+- Si `.local-jwk/` no existe, el auth-server genera una clave **efímera** en
+  memoria (los tokens dejan de validar al reiniciar).
+
+Para prod/dev la clave llega por variable de entorno desde un gestor de secretos
+(Vault), persistente y compartida entre instancias — nunca en git.
+
 ## Construir / correr
 ```bash
 cd ../hermes-platform-shared && ./gradlew publishToMavenLocal

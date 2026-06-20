@@ -4,3 +4,7 @@ build/
 .idea/
 *.iml
 *.log
+
+# Clave RSA local para firmar JWT (perfil local). NUNCA versionar: es secreta.
+.local-jwk/
+*.pem

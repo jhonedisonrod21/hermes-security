@@ -16,3 +16,44 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
+
+// --- Clave RSA local para firmar JWT (perfil local) --------------------------
+// Se genera por máquina dentro de .local-jwk (gitignored). NUNCA se commitea:
+// es la clave de firma; quien la tenga puede falsificar tokens. Ver README.
+def localJwkDir = file("${rootDir}/.local-jwk")
+def localJwkPrivate = new File(localJwkDir, 'hermes-auth-private-key.pem')
+def localJwkPublic = new File(localJwkDir, 'hermes-auth-public-key.pem')
+
+tasks.register('generateLocalJwk') {
+    group = 'application'
+    description = 'Genera (si no existe) el par RSA local para firmar JWT en perfil local. Gitignored.'
+    outputs.files(localJwkPrivate, localJwkPublic)
+    onlyIf { !localJwkPrivate.exists() || !localJwkPublic.exists() }
+    doLast {
+        localJwkDir.mkdirs()
+        def generator = java.security.KeyPairGenerator.getInstance('RSA')
+        generator.initialize(2048)
+        def pair = generator.generateKeyPair()
+        def pem = java.util.Base64.getMimeEncoder(64, '\n'.getBytes('US-ASCII'))
+        localJwkPrivate.text = "-----BEGIN PRIVATE KEY-----\n" + pem.encodeToString(pair.private.encoded) + "\n-----END PRIVATE KEY-----\n"
+        localJwkPublic.text = "-----BEGIN PUBLIC KEY-----\n" + pem.encodeToString(pair.public.encoded) + "\n-----END PUBLIC KEY-----\n"
+        try {
+            java.nio.file.Files.setPosixFilePermissions(localJwkPrivate.toPath(),
+                    java.nio.file.attribute.PosixFilePermissions.fromString('rw-------'))
+        } catch (ignored) { /* no-POSIX FS */ }
+        println "Clave JWK local generada en ${localJwkDir}"
+    }
+}
+
+// bootRun (IntelliJ / consola) carga el par local si existe; si no, el auth-server
+// genera una clave efímera en memoria.
+tasks.named('bootRun') {
+    dependsOn 'generateLocalJwk'
+    doFirst {
+        if (localJwkPrivate.exists() && localJwkPublic.exists()) {
+            environment 'HERMES_AUTH_JWK_KEY_ID', 'hermes-auth-local-key'
+            environment 'HERMES_AUTH_JWK_PUBLIC_KEY_PEM', localJwkPublic.text
+            environment 'HERMES_AUTH_JWK_PRIVATE_KEY_PEM', localJwkPrivate.text
+        }
+    }
+}
