@@ -1,6 +1,6 @@
-rootProject.name = 'hermes-iam'
+rootProject.name = 'hermes-security'
 
-// IAM (BD HERMES_IAM): identidad y acceso.
+// Security / IAM (BD HERMES_IAM): identidad, acceso y emisión de tokens.
 // Consume 'co.com.hermes.calendar:hermes-shared' desde mavenLocal
 // (publicar antes con: cd ../hermes-platform-shared && ./gradlew publishToMavenLocal).
 include 'hermes-auth-server'
