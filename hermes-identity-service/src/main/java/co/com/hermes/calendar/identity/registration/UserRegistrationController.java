@@ -27,9 +27,9 @@ public class UserRegistrationController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
-            summary = "Registra un usuario",
-            description = "Crea una cuenta habilitada en Identity, asigna el rol global USER y aprovisiona un tenant "
-                    + "inicial con membresia OWNER para que el usuario pueda iniciar sesion inmediatamente."
+            summary = "Registra un usuario invitado",
+            description = "Crea una cuenta habilitada en Identity con el rol global GUEST_USER (cuenta de plataforma, "
+                    + "sin tenant). El usuario puede iniciar sesion de inmediato; unirse o crear una organizacion es un paso aparte."
     )
     @ApiResponse(responseCode = "201", description = "Usuario registrado.",
             content = @Content(schema = @Schema(implementation = UserRegistrationResponse.class)))

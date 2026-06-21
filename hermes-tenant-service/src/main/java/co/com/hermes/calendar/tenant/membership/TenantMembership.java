@@ -54,15 +54,19 @@ public class TenantMembership {
     protected TenantMembership() {
     }
 
-    public static TenantMembership activeOwner(UUID id, UUID userId, Tenant tenant, TenantRole ownerRole) {
+    public static TenantMembership activeMember(UUID id, UUID userId, Tenant tenant, TenantRole role) {
         TenantMembership membership = new TenantMembership();
         membership.id = id;
         membership.userId = userId;
         membership.tenant = tenant;
         membership.status = "ACTIVE";
         membership.createdAt = OffsetDateTime.now();
-        membership.roles.add(ownerRole);
+        membership.roles.add(role);
         return membership;
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public UUID getUserId() {
@@ -71,6 +75,10 @@ public class TenantMembership {
 
     public Tenant getTenant() {
         return tenant;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public String getStatus() {

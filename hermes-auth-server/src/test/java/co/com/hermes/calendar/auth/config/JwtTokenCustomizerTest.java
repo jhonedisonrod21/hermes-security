@@ -1,7 +1,9 @@
 package co.com.hermes.calendar.auth.config;
 
+import co.com.hermes.calendar.auth.identity.HermesPrincipalResolver;
 import co.com.hermes.calendar.auth.identity.HermesUserPrincipal;
 import co.com.hermes.calendar.auth.identity.IdentityAuthProperties;
+import co.com.hermes.calendar.shared.security.AccountScope;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,14 +41,15 @@ class JwtTokenCustomizerTest {
         UUID tenantId = UUID.fromString("aef1ecb8-3f07-4795-812e-929b4a6d4e76");
         HermesUserPrincipal principal = new HermesUserPrincipal(
                 userId,
+                AccountScope.TENANT,
                 tenantId,
                 "ada-company",
                 "Ada Company",
                 "ada@hermes.test",
                 "ada@hermes.test",
-                List.of("OWNER"),
-                List.of("tenant:manage", "calendar:read"),
-                List.of(new SimpleGrantedAuthority("ROLE_OWNER"))
+                List.of("TENANT_ADMIN"),
+                List.of("calendar:read", "calendar:write"),
+                List.of(new SimpleGrantedAuthority("ROLE_TENANT_ADMIN"))
         );
         JwtEncodingContext context = jwtContext()
                 .principal(UsernamePasswordAuthenticationToken.authenticated(
@@ -56,21 +59,25 @@ class JwtTokenCustomizerTest {
                 ))
                 .build();
 
+        IdentityAuthProperties properties = new IdentityAuthProperties(IDENTITY_BASE_URL, INTERNAL_KEY, TENANT_BASE_URL);
+        RestClient.Builder builder = RestClient.builder();
         new AuthorizationServerConfig().jwtTokenCustomizer(
-                new IdentityAuthProperties(IDENTITY_BASE_URL, INTERNAL_KEY, TENANT_BASE_URL),
-                RestClient.builder()
+                properties,
+                new HermesPrincipalResolver(properties, builder),
+                builder
         ).customize(context);
 
         JwtClaimsSet claims = context.getClaims().build();
         assertThat(claims.getSubject()).isEqualTo(userId.toString());
+        assertThat((Object) claims.getClaim("account_scope")).isEqualTo("TENANT");
         assertThat((Object) claims.getClaim("user_id")).isEqualTo(userId);
         assertThat((Object) claims.getClaim("preferred_username")).isEqualTo("ada@hermes.test");
         assertThat((Object) claims.getClaim("email")).isEqualTo("ada@hermes.test");
         assertThat((Object) claims.getClaim("tenant_id")).isEqualTo(tenantId);
         assertThat((Object) claims.getClaim("tenant_slug")).isEqualTo("ada-company");
         assertThat((Object) claims.getClaim("tenant_name")).isEqualTo("Ada Company");
-        assertThat((List<String>) claims.getClaim("roles")).containsExactly("OWNER");
-        assertThat((List<String>) claims.getClaim("permissions")).containsExactly("tenant:manage", "calendar:read");
+        assertThat((List<String>) claims.getClaim("roles")).containsExactly("TENANT_ADMIN");
+        assertThat((List<String>) claims.getClaim("permissions")).containsExactly("calendar:read", "calendar:write");
     }
 
     @Test
@@ -100,7 +107,8 @@ class JwtTokenCustomizerTest {
                           "email": "ada@hermes.test",
                           "enabled": true,
                           "locked": false,
-                          "roles": ["USER"]
+                          "platformAnchored": false,
+                          "roles": []
                         }
                         """, MediaType.APPLICATION_JSON));
         server.expect(once(), requestTo(TENANT_BASE_URL + "/internal/users/" + userId + "/tenant-context/default"))
@@ -110,22 +118,74 @@ class JwtTokenCustomizerTest {
                           "tenantId": "aef1ecb8-3f07-4795-812e-929b4a6d4e76",
                           "tenantSlug": "ada-company",
                           "tenantName": "Ada Company",
-                          "roles": ["OWNER"],
-                          "permissions": ["tenant:manage"]
+                          "roles": ["TENANT_ADMIN"],
+                          "permissions": ["calendar:read"]
                         }
                         """, MediaType.APPLICATION_JSON));
 
+        IdentityAuthProperties properties = new IdentityAuthProperties(IDENTITY_BASE_URL, INTERNAL_KEY, TENANT_BASE_URL);
         new AuthorizationServerConfig().jwtTokenCustomizer(
-                new IdentityAuthProperties(IDENTITY_BASE_URL, INTERNAL_KEY, TENANT_BASE_URL),
+                properties,
+                new HermesPrincipalResolver(properties, builder),
                 builder
         ).customize(context);
 
         JwtClaimsSet claims = context.getClaims().build();
         assertThat(claims.getSubject()).isEqualTo(userId.toString());
         assertThat((Object) claims.getClaim("tenant_id")).isEqualTo(tenantId);
-        assertThat((List<String>) claims.getClaim("roles")).containsExactly("OWNER");
-        assertThat((List<String>) claims.getClaim("permissions")).containsExactly("tenant:manage");
+        assertThat((List<String>) claims.getClaim("roles")).containsExactly("TENANT_ADMIN");
+        assertThat((List<String>) claims.getClaim("permissions")).containsExactly("calendar:read");
 
+        server.verify();
+    }
+
+    @Test
+    void addsPlatformClaimsForSystemAdminWithoutTenant() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000100");
+        RegisteredClient client = registeredClient();
+        OAuth2Authorization authorization = OAuth2Authorization.withRegisteredClient(client)
+                .principalName("admin@hermes.local")
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizedScopes(Set.of("openid", "profile"))
+                .build();
+        JwtEncodingContext context = jwtContext()
+                .registeredClient(client)
+                .authorization(authorization)
+                .build();
+
+        server.expect(once(), requestTo(IDENTITY_BASE_URL + "/internal/auth/users/admin%40hermes.local"))
+                .andExpect(header("X-Hermes-Internal-Key", INTERNAL_KEY))
+                .andRespond(withSuccess("""
+                        {
+                          "authenticated": true,
+                          "userId": "00000000-0000-0000-0000-000000000100",
+                          "username": "admin@hermes.local",
+                          "email": "admin@hermes.local",
+                          "enabled": true,
+                          "locked": false,
+                          "platformAnchored": true,
+                          "roles": ["SYSTEM_ADMIN"],
+                          "permissions": ["platform:admin"]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        IdentityAuthProperties properties = new IdentityAuthProperties(IDENTITY_BASE_URL, INTERNAL_KEY, TENANT_BASE_URL);
+        new AuthorizationServerConfig().jwtTokenCustomizer(
+                properties,
+                new HermesPrincipalResolver(properties, builder),
+                builder
+        ).customize(context);
+
+        JwtClaimsSet claims = context.getClaims().build();
+        assertThat(claims.getSubject()).isEqualTo(userId.toString());
+        assertThat((Object) claims.getClaim("account_scope")).isEqualTo("PLATFORM");
+        assertThat((Object) claims.getClaim("tenant_id")).isNull();
+        assertThat((List<String>) claims.getClaim("roles")).containsExactly("SYSTEM_ADMIN");
+        assertThat((List<String>) claims.getClaim("permissions")).containsExactly("platform:admin");
+
+        // Only the identity profile lookup happens; no tenant-context call for platform accounts.
         server.verify();
     }
 

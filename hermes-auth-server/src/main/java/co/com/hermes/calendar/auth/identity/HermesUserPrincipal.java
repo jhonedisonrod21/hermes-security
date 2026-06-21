@@ -1,5 +1,6 @@
 package co.com.hermes.calendar.auth.identity;
 
+import co.com.hermes.calendar.shared.security.AccountScope;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 public class HermesUserPrincipal extends User {
 
     private final UUID userId;
+    private final AccountScope scope;
     private final UUID tenantId;
     private final String tenantSlug;
     private final String tenantName;
@@ -19,6 +21,7 @@ public class HermesUserPrincipal extends User {
 
     public HermesUserPrincipal(
             UUID userId,
+            AccountScope scope,
             UUID tenantId,
             String tenantSlug,
             String tenantName,
@@ -30,6 +33,7 @@ public class HermesUserPrincipal extends User {
     ) {
         super(username, "N/A", true, true, true, true, authorities);
         this.userId = userId;
+        this.scope = scope;
         this.tenantId = tenantId;
         this.tenantSlug = tenantSlug;
         this.tenantName = tenantName;
@@ -40,6 +44,10 @@ public class HermesUserPrincipal extends User {
 
     public UUID getUserId() {
         return userId;
+    }
+
+    public AccountScope getScope() {
+        return scope;
     }
 
     public UUID getTenantId() {

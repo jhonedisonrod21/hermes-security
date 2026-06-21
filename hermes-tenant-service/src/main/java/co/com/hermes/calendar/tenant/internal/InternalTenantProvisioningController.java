@@ -9,6 +9,7 @@ import co.com.hermes.calendar.tenant.tenant.TenantRepository;
 import co.com.hermes.calendar.shared.contract.TenantProvisioningRequest;
 import co.com.hermes.calendar.shared.contract.TenantProvisioningResponse;
 import co.com.hermes.calendar.shared.security.HermesInternalHeaders;
+import co.com.hermes.calendar.shared.security.HermesInternalKeys;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -37,7 +38,7 @@ import java.util.UUID;
 @Tag(name = "Internal tenant provisioning", description = "Endpoints internos para aprovisionar tenants durante el registro.")
 public class InternalTenantProvisioningController {
 
-    private static final String OWNER = "OWNER";
+    private static final String TENANT_ADMIN = "TENANT_ADMIN";
     private static final String INTERNAL_KEY_HEADER = HermesInternalHeaders.INTERNAL_KEY;
 
     private final InternalTenantProperties properties;
@@ -62,7 +63,7 @@ public class InternalTenantProvisioningController {
     @Transactional
     @Operation(
             summary = "Aprovisiona tenant inicial",
-            description = "Crea un tenant personal para un usuario nuevo y le asigna una membresia ACTIVE con rol OWNER.",
+            description = "Crea un tenant para un usuario y le asigna una membresia ACTIVE con rol TENANT_ADMIN.",
             security = @SecurityRequirement(name = "hermes-internal-key")
     )
     @ApiResponse(responseCode = "201", description = "Tenant aprovisionado.",
@@ -76,20 +77,20 @@ public class InternalTenantProvisioningController {
     ) {
         assertInternalKey(apiKey);
 
-        TenantRole ownerRole = roles.findByName(OWNER)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "OWNER role is not configured"));
+        TenantRole adminRole = roles.findByName(TENANT_ADMIN)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "TENANT_ADMIN role is not configured"));
 
         UUID tenantId = UUID.randomUUID();
         String slug = uniqueSlug(request.userId());
         String tenantName = tenantName(request.email());
         Tenant tenant = tenants.save(Tenant.active(tenantId, slug, tenantName));
-        memberships.save(TenantMembership.activeOwner(UUID.randomUUID(), request.userId(), tenant, ownerRole));
+        memberships.save(TenantMembership.activeMember(UUID.randomUUID(), request.userId(), tenant, adminRole));
 
         return new TenantProvisioningResponse(tenant.getId(), tenant.getSlug(), tenant.getName());
     }
 
     private void assertInternalKey(String apiKey) {
-        if (!StringUtils.hasText(properties.apiKey()) || !properties.apiKey().equals(apiKey)) {
+        if (!HermesInternalKeys.matches(properties.apiKey(), apiKey)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid internal key");
         }
     }

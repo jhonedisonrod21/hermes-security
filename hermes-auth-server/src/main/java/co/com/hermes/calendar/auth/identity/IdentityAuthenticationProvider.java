@@ -2,7 +2,6 @@ package co.com.hermes.calendar.auth.identity;
 
 import co.com.hermes.calendar.shared.contract.CredentialVerificationRequest;
 import co.com.hermes.calendar.shared.contract.CredentialVerificationResponse;
-import co.com.hermes.calendar.shared.contract.TenantContextResponse;
 import co.com.hermes.calendar.shared.security.HermesInternalHeaders;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -12,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.FactorGrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -26,15 +24,16 @@ public class IdentityAuthenticationProvider implements AuthenticationProvider {
 
     private final IdentityAuthProperties properties;
     private final RestClient identityClient;
-    private final RestClient tenantClient;
+    private final HermesPrincipalResolver principalResolver;
 
     public IdentityAuthenticationProvider(
             IdentityAuthProperties properties,
+            HermesPrincipalResolver principalResolver,
             @Qualifier("hermesLoadBalancedRestClientBuilder") RestClient.Builder restClientBuilder
     ) {
         this.properties = properties;
+        this.principalResolver = principalResolver;
         this.identityClient = restClientBuilder.baseUrl(properties.baseUrl()).build();
-        this.tenantClient = restClientBuilder.baseUrl(properties.tenantBaseUrl()).build();
     }
 
     @Override
@@ -53,32 +52,11 @@ public class IdentityAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        TenantContextResponse tenantContext = tenantClient.get()
-                .uri("/internal/users/{userId}/tenant-context/default", response.userId())
-                .header(INTERNAL_KEY_HEADER, properties.internalApiKey())
-                .retrieve()
-                .body(TenantContextResponse.class);
+        HermesUserPrincipal principal = principalResolver.resolve(response)
+                .orElseThrow(() -> new BadCredentialsException("User has no authorization context"));
 
-        if (tenantContext == null || tenantContext.tenantId() == null) {
-            throw new BadCredentialsException("User has no active tenant");
-        }
-
-        List<GrantedAuthority> authorities = new ArrayList<>(tenantContext.roles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .toList());
+        List<GrantedAuthority> authorities = new ArrayList<>(principal.getAuthorities());
         authorities.add(FactorGrantedAuthority.fromAuthority(FactorGrantedAuthority.PASSWORD_AUTHORITY));
-
-        HermesUserPrincipal principal = new HermesUserPrincipal(
-                response.userId(),
-                tenantContext.tenantId(),
-                tenantContext.tenantSlug(),
-                tenantContext.tenantName(),
-                response.username(),
-                response.email(),
-                tenantContext.roles(),
-                tenantContext.permissions(),
-                authorities
-        );
 
         return UsernamePasswordAuthenticationToken.authenticated(principal, null, authorities);
     }

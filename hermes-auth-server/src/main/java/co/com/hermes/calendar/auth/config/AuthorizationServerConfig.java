@@ -1,9 +1,9 @@
 package co.com.hermes.calendar.auth.config;
 
+import co.com.hermes.calendar.auth.identity.HermesPrincipalResolver;
 import co.com.hermes.calendar.auth.identity.HermesUserPrincipal;
 import co.com.hermes.calendar.auth.identity.IdentityAuthProperties;
 import co.com.hermes.calendar.shared.contract.CredentialVerificationResponse;
-import co.com.hermes.calendar.shared.contract.TenantContextResponse;
 import co.com.hermes.calendar.shared.security.HermesInternalHeaders;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -51,7 +51,6 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.List;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -137,24 +136,28 @@ public class AuthorizationServerConfig {
     @Bean
     OAuth2TokenCustomizer<JwtEncodingContext> jwtTokenCustomizer(
             IdentityAuthProperties properties,
+            HermesPrincipalResolver principalResolver,
             @Qualifier("hermesLoadBalancedRestClientBuilder") RestClient.Builder restClientBuilder
     ) {
         RestClient identityClient = restClientBuilder.baseUrl(properties.baseUrl()).build();
-        RestClient tenantClient = restClientBuilder.baseUrl(properties.tenantBaseUrl()).build();
 
         return context -> {
-            HermesUserPrincipal user = resolveHermesUserPrincipal(context, properties, identityClient, tenantClient);
+            HermesUserPrincipal user = resolveHermesUserPrincipal(context, properties, principalResolver, identityClient);
             if (user != null) {
                 context.getClaims()
                         .subject(user.getUserId().toString())
                         .claim("user_id", user.getUserId())
                         .claim("preferred_username", user.getUsername())
                         .claim("email", user.getEmail())
-                        .claim("tenant_id", user.getTenantId())
-                        .claim("tenant_slug", user.getTenantSlug())
-                        .claim("tenant_name", user.getTenantName())
+                        .claim("account_scope", user.getScope().name())
                         .claim("roles", user.getRoles())
                         .claim("permissions", user.getPermissions());
+                if (user.getTenantId() != null) {
+                    context.getClaims()
+                            .claim("tenant_id", user.getTenantId())
+                            .claim("tenant_slug", user.getTenantSlug())
+                            .claim("tenant_name", user.getTenantName());
+                }
             }
         };
     }
@@ -162,8 +165,8 @@ public class AuthorizationServerConfig {
     private static HermesUserPrincipal resolveHermesUserPrincipal(
             JwtEncodingContext context,
             IdentityAuthProperties properties,
-            RestClient identityClient,
-            RestClient tenantClient
+            HermesPrincipalResolver principalResolver,
+            RestClient identityClient
     ) {
         Authentication principal = context.getPrincipal();
         if (principal != null && principal.getPrincipal() instanceof HermesUserPrincipal user) {
@@ -179,31 +182,7 @@ public class AuthorizationServerConfig {
                 .retrieve()
                 .body(CredentialVerificationResponse.class);
 
-        if (user == null || !user.authenticated() || !user.enabled() || user.locked()) {
-            return null;
-        }
-
-        TenantContextResponse tenantContext = tenantClient.get()
-                .uri("/internal/users/{userId}/tenant-context/default", user.userId())
-                .header(INTERNAL_KEY_HEADER, properties.internalApiKey())
-                .retrieve()
-                .body(TenantContextResponse.class);
-
-        if (tenantContext == null || tenantContext.tenantId() == null) {
-            return null;
-        }
-
-        return new HermesUserPrincipal(
-                user.userId(),
-                tenantContext.tenantId(),
-                tenantContext.tenantSlug(),
-                tenantContext.tenantName(),
-                user.username(),
-                user.email(),
-                tenantContext.roles(),
-                tenantContext.permissions(),
-                List.of()
-        );
+        return principalResolver.resolve(user).orElse(null);
     }
 
     @Bean

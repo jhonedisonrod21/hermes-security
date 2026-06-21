@@ -9,6 +9,8 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OAuthClientSeederTest {
@@ -20,7 +22,9 @@ class OAuthClientSeederTest {
                 clients,
                 "hermes-web-client",
                 "{noop}hermes-web-secret",
-                "http://127.0.0.1:5173/bff/login/oauth2/code/hermes-web-client, https://oauth.pstmn.io/v1/callback"
+                "http://127.0.0.1:5173/bff/login/oauth2/code/hermes-web-client, https://oauth.pstmn.io/v1/callback",
+                Duration.ofMinutes(15),
+                Duration.ofHours(8)
         );
 
         runner.run(new EmptyApplicationArguments());
@@ -40,6 +44,9 @@ class OAuthClientSeederTest {
                 .containsExactlyInAnyOrder(OidcScopes.OPENID, OidcScopes.PROFILE, "calendar.read", "calendar.write");
         assertThat(client.getClientSettings().isRequireProofKey()).isTrue();
         assertThat(client.getClientSettings().isRequireAuthorizationConsent()).isFalse();
+        assertThat(client.getTokenSettings().getAccessTokenTimeToLive()).isEqualTo(Duration.ofMinutes(15));
+        assertThat(client.getTokenSettings().getRefreshTokenTimeToLive()).isEqualTo(Duration.ofHours(8));
+        assertThat(client.getTokenSettings().isReuseRefreshTokens()).isFalse();
     }
 
     @Test
@@ -58,7 +65,9 @@ class OAuthClientSeederTest {
                 clients,
                 "hermes-web-client",
                 "{noop}new-secret",
-                "https://oauth.pstmn.io/v1/callback"
+                "https://oauth.pstmn.io/v1/callback",
+                Duration.ofMinutes(15),
+                Duration.ofHours(8)
         ).run(new EmptyApplicationArguments());
 
         RegisteredClient client = clients.findByClientId("hermes-web-client");

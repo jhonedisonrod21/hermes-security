@@ -10,7 +10,9 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @Configuration
@@ -21,7 +23,9 @@ public class OAuthClientSeeder {
             RegisteredClientRepository clients,
             @Value("${hermes.oauth.web-client.client-id}") String clientId,
             @Value("${hermes.oauth.web-client.client-secret}") String clientSecret,
-            @Value("${hermes.oauth.web-client.redirect-uris}") String redirectUris
+            @Value("${hermes.oauth.web-client.redirect-uris}") String redirectUris,
+            @Value("${hermes.oauth.web-client.access-token-ttl:15m}") Duration accessTokenTtl,
+            @Value("${hermes.oauth.web-client.refresh-token-ttl:8h}") Duration refreshTokenTtl
     ) {
         return args -> {
             if (clients.findByClientId(clientId) != null) {
@@ -49,6 +53,14 @@ public class OAuthClientSeeder {
                     .clientSettings(ClientSettings.builder()
                             .requireProofKey(true)
                             .requireAuthorizationConsent(false)
+                            .build())
+                    // TTLs explícitos (no depender de los defaults) + rotación de refresh token:
+                    // cada refresh emite uno nuevo e invalida el anterior, acotando la ventana de un
+                    // refresh token filtrado y reflejando antes los cambios de rol/membresía.
+                    .tokenSettings(TokenSettings.builder()
+                            .accessTokenTimeToLive(accessTokenTtl)
+                            .refreshTokenTimeToLive(refreshTokenTtl)
+                            .reuseRefreshTokens(false)
                             .build())
                     .build();
 

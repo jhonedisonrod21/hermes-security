@@ -5,7 +5,9 @@ import co.com.hermes.calendar.identity.user.UserAccount;
 import co.com.hermes.calendar.identity.user.UserAccountRepository;
 import co.com.hermes.calendar.shared.contract.CredentialVerificationRequest;
 import co.com.hermes.calendar.shared.contract.CredentialVerificationResponse;
+import co.com.hermes.calendar.shared.security.AccountScope;
 import co.com.hermes.calendar.shared.security.HermesInternalHeaders;
+import co.com.hermes.calendar.shared.security.HermesInternalKeys;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -17,7 +19,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -105,7 +106,7 @@ public class InternalCredentialController {
     }
 
     private void assertInternalKey(String apiKey) {
-        if (!StringUtils.hasText(properties.apiKey()) || !properties.apiKey().equals(apiKey)) {
+        if (!HermesInternalKeys.matches(properties.apiKey(), apiKey)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid internal key");
         }
     }
@@ -115,6 +116,15 @@ public class InternalCredentialController {
                 .map(Role::getName)
                 .sorted()
                 .toList();
+        List<String> permissions = user.getRoles().stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .distinct()
+                .sorted()
+                .toList();
+        // Una cuenta queda anclada a plataforma si tiene algún rol de alcance PLATFORM (p. ej.
+        // SYSTEM_ADMIN). El resto deja que la membresía activa decida el alcance en Auth Server.
+        boolean platformAnchored = user.getRoles().stream()
+                .anyMatch(role -> role.getScope() == AccountScope.PLATFORM);
 
         return new CredentialVerificationResponse(
                 true,
@@ -123,7 +133,8 @@ public class InternalCredentialController {
                 user.getUsername(),
                 user.getEmail(),
                 roles,
-                List.of(),
+                permissions,
+                platformAnchored,
                 user.isEnabled(),
                 user.isLocked()
         );

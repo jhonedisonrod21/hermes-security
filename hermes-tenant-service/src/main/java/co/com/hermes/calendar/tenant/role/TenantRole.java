@@ -24,18 +24,18 @@ public class TenantRole {
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 80)
-    @Schema(description = "Nombre canonico del rol.", example = "OWNER")
+    @Schema(description = "Nombre canonico del rol.", example = "TENANT_ADMIN")
     private String name;
 
     @Column(nullable = false, length = 200)
-    @Schema(description = "Descripcion funcional del rol.", example = "Propietario del tenant")
+    @Schema(description = "Descripcion funcional del rol.", example = "Administrador de la organizacion")
     private String description;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "tenant_role_permissions", joinColumns = @JoinColumn(name = "role_id"))
     @Column(name = "permission", nullable = false, length = 120)
     @Schema(description = "Permisos efectivos entregados por este rol.",
-            example = "[\"tenant:manage\",\"users:manage\",\"calendar:read\"]")
+            example = "[\"users:manage\",\"calendar:read\",\"calendar:write\"]")
     private Set<String> permissions = new LinkedHashSet<>();
 
     protected TenantRole() {

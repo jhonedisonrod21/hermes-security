@@ -2,8 +2,16 @@ CREATE TABLE IF NOT EXISTS tenants (
     id CHAR(36) PRIMARY KEY,
     slug VARCHAR(80) NOT NULL UNIQUE,
     name VARCHAR(160) NOT NULL,
+    tax_id VARCHAR(40) UNIQUE,
+    country VARCHAR(80),
+    city VARCHAR(120),
+    address VARCHAR(200),
+    description VARCHAR(500),
+    latitude DECIMAL(9,6),
+    longitude DECIMAL(9,6),
     status VARCHAR(30) NOT NULL,
-    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6)
 );
 
 CREATE TABLE IF NOT EXISTS tenant_roles (
@@ -49,32 +57,17 @@ VALUES ('00000000-0000-0000-0000-000000000010', 'hermes-local', 'Hermes Local Co
 
 INSERT IGNORE INTO tenant_roles (id, name, description)
 VALUES
-    ('00000000-0000-0000-0000-000000000011', 'OWNER', 'Tenant owner'),
-    ('00000000-0000-0000-0000-000000000012', 'ADMIN', 'Tenant administrator'),
-    ('00000000-0000-0000-0000-000000000013', 'SCHEDULER', 'Calendar scheduling operator'),
-    ('00000000-0000-0000-0000-000000000014', 'VIEWER', 'Read-only tenant member');
+    ('00000000-0000-0000-0000-000000000012', 'TENANT_ADMIN', 'Administrador de la organizacion'),
+    ('00000000-0000-0000-0000-000000000013', 'TENANT_PARTNER', 'Colaborador de la organizacion');
 
 INSERT IGNORE INTO tenant_role_permissions (role_id, permission)
 VALUES
-    ('00000000-0000-0000-0000-000000000011', 'tenant:manage'),
-    ('00000000-0000-0000-0000-000000000011', 'users:manage'),
-    ('00000000-0000-0000-0000-000000000011', 'calendar:read'),
-    ('00000000-0000-0000-0000-000000000011', 'calendar:write'),
-    ('00000000-0000-0000-0000-000000000011', 'billing:read'),
     ('00000000-0000-0000-0000-000000000012', 'users:manage'),
     ('00000000-0000-0000-0000-000000000012', 'calendar:read'),
     ('00000000-0000-0000-0000-000000000012', 'calendar:write'),
     ('00000000-0000-0000-0000-000000000013', 'calendar:read'),
-    ('00000000-0000-0000-0000-000000000013', 'calendar:write'),
-    ('00000000-0000-0000-0000-000000000014', 'calendar:read');
+    ('00000000-0000-0000-0000-000000000013', 'calendar:write');
 
-INSERT IGNORE INTO tenant_memberships (id, tenant_id, user_id, status)
-VALUES (
-    '00000000-0000-0000-0000-000000000020',
-    '00000000-0000-0000-0000-000000000010',
-    '00000000-0000-0000-0000-000000000100',
-    'ACTIVE'
-);
-
-INSERT IGNORE INTO tenant_membership_roles (membership_id, role_id)
-VALUES ('00000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000011');
+-- El administrador del sistema (identidad 0..0100) es una cuenta de PLATAFORMA y no
+-- pertenece a ningun tenant, por lo que no se siembra ninguna membresia por defecto.
+-- El tenant 'hermes-local' y sus roles quedan disponibles para los actores de tenant.

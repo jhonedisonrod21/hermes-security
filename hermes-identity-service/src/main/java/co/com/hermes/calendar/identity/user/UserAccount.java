@@ -81,6 +81,17 @@ public class UserAccount {
         this.tenantId = tenantId;
     }
 
+    /** Actualiza el perfil editable por el administrador del sistema. */
+    public void updateProfile(String username, String email) {
+        this.username = username;
+        this.email = email;
+    }
+
+    /** Bloquea o desbloquea la cuenta (un usuario bloqueado no puede autenticarse). */
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -111,5 +122,9 @@ public class UserAccount {
 
     public Set<Role> getRoles() {
         return roles;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 }

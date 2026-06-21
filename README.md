@@ -58,6 +58,30 @@ cd ../hermes-platform-shared && ./gradlew publishToMavenLocal
 cd ../hermes-security && ./gradlew test
 ```
 
+## Endurecimiento (gate base 1.0)
+- **Secretos sin default en base** (fail-fast): `HERMES_INTERNAL_API_KEY`, `HERMES_WEB_CLIENT_SECRET`,
+  JWK y cookie `Secure` se exigen por entorno; las comodidades de **local** viven en
+  `application-local.yml`. Un arranque sin perfil/secreto no levanta.
+- **Sin credenciales en migraciones.** El SYSTEM_ADMIN se crea en local con `LocalAdminSeeder`
+  (`@Profile("local")`). En dev/prod se da de alta fuera de banda con password **BCrypt**.
+- **Clave interna**: comparación en tiempo constante (`HermesInternalKeys`). La superficie
+  `/internal/**` asume **red de confianza**: solo el gateway debe alcanzar los servicios
+  (NetworkPolicy/mTLS es requisito de despliegue, no sustituible por la clave compartida).
+- **Resiliencia**: los `RestClient` del Auth Server hacia identity/tenant llevan timeouts
+  (`hermes.http.connect-timeout`/`read-timeout`).
+- **Frescura de token**: `TokenSettings` explícitos (access 15m, refresh 8h, **rotación** de
+  refresh). Cambios de rol/membresía se reflejan en la siguiente emisión; no hay revocación
+  inmediata (decisión consciente; introspección/lista de revocación si se requiere).
+- **JWK persistente y compartida** es obligatoria en dev/prod (HA / validez tras redeploy);
+  el perfil `dev` ya falla si falta. La efímera solo aplica a local sin `.local-jwk`.
+- **Aislamiento multi-tenant**: primitiva `HermesRequestContext` (en `hermes-shared`) que lee las
+  cabeceras confiables `X-Hermes-*` del gateway. Todo servicio de datos **debe** acotar sus
+  consultas por `ctx.requireTenant()`; nunca por input del cliente.
+- **Observabilidad**: trazas correlacionadas (traceId/spanId) + métricas Prometheus habilitadas;
+  requieren un backend (Zipkin/OTLP + Prometheus) en infraestructura.
+- **Rate limiting**: por IP en el gateway para login/registro (en memoria, por instancia). A
+  escala se requiere un limiter distribuido (Redis).
+
 ## Stack
 Java 25 · Gradle 9.5 · Spring Boot 4.0.6 / Spring Cloud 2025.1.1 · Spring
 Authorization Server.
