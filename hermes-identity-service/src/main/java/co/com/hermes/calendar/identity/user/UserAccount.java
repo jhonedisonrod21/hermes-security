@@ -37,6 +37,10 @@ public class UserAccount {
     @Schema(description = "Email del usuario.", example = "admin@hermes.local")
     private String email;
 
+    @Column(length = 40)
+    @Schema(description = "Telefono de contacto (para notificaciones por SMS).", example = "+573001112233")
+    private String phone;
+
     @Column(name = "password_hash", nullable = false, length = 255)
     @Schema(description = "Hash de password. No debe exponerse en APIs publicas.", accessMode = Schema.AccessMode.WRITE_ONLY)
     private String passwordHash;
@@ -81,10 +85,16 @@ public class UserAccount {
         this.tenantId = tenantId;
     }
 
+    /** Fija el teléfono de contacto (normalizado por el llamante). */
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
     /** Actualiza el perfil editable por el administrador del sistema. */
-    public void updateProfile(String username, String email) {
+    public void updateProfile(String username, String email, String phone) {
         this.username = username;
         this.email = email;
+        this.phone = phone;
     }
 
     /** Bloquea o desbloquea la cuenta (un usuario bloqueado no puede autenticarse). */
@@ -106,6 +116,10 @@ public class UserAccount {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getPhone() {
+        return phone;
     }
 
     public String getPasswordHash() {

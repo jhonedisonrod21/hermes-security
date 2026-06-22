@@ -49,7 +49,8 @@ public class UserAdminService {
         if (users.existsByEmailIgnoreCaseAndIdNot(email, id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
-        user.updateProfile(username, email);
+        String phone = request.phone() == null || request.phone().trim().isEmpty() ? null : request.phone().trim();
+        user.updateProfile(username, email, phone);
         return UserResponse.from(user);
     }
 

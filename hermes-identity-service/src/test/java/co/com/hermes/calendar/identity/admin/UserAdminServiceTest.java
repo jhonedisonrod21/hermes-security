@@ -36,7 +36,7 @@ class UserAdminServiceTest {
         when(users.existsByUsernameIgnoreCaseAndIdNot("ada.perez", id)).thenReturn(false);
         when(users.existsByEmailIgnoreCaseAndIdNot("ada@acme.test", id)).thenReturn(false);
 
-        UserResponse response = service.update(id, new UserUpdateRequest("ada.perez", "ada@acme.test"));
+        UserResponse response = service.update(id, new UserUpdateRequest("ada.perez", "ada@acme.test", "+573001112233"));
 
         assertThat(response.username()).isEqualTo("ada.perez");
         assertThat(response.email()).isEqualTo("ada@acme.test");
@@ -50,7 +50,7 @@ class UserAdminServiceTest {
         when(users.existsByUsernameIgnoreCaseAndIdNot(eq("ada.perez"), eq(id))).thenReturn(false);
         when(users.existsByEmailIgnoreCaseAndIdNot("taken@acme.test", id)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.update(id, new UserUpdateRequest("ada.perez", "taken@acme.test")))
+        assertThatThrownBy(() -> service.update(id, new UserUpdateRequest("ada.perez", "taken@acme.test", null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.CONFLICT);
     }

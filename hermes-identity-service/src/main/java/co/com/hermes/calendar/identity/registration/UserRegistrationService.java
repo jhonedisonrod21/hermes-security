@@ -45,8 +45,18 @@ public class UserRegistrationService {
         // El invitado se registra como cuenta de plataforma (sin tenant). Unirse o crear una
         // organizacion es un paso posterior; no se aprovisiona ningun tenant en el registro.
         UserAccount user = UserAccount.registeredUser(UUID.randomUUID(), email, passwordEncoder.encode(request.password()), guestRole);
+        user.setPhone(normalizePhone(request.phone()));
 
         UserAccount saved = users.save(user);
         return new UserRegistrationResponse(saved.getId(), saved.getEmail(), GUEST_USER_ROLE);
+    }
+
+    /** Recorta el teléfono y lo deja en {@code null} si viene vacío. */
+    private static String normalizePhone(String phone) {
+        if (phone == null) {
+            return null;
+        }
+        String trimmed = phone.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

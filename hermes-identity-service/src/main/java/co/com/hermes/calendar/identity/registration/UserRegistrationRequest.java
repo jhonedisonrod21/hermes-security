@@ -14,6 +14,9 @@ public record UserRegistrationRequest(
         @Schema(description = "Password del usuario. Minimo 8 caracteres.", example = "localPass123")
         @NotBlank
         @Size(min = 8, max = 128)
-        String password
+        String password,
+        @Schema(description = "Telefono de contacto para notificaciones por SMS (opcional).", example = "+573001112233")
+        @Size(max = 40)
+        String phone
 ) {
 }
