@@ -15,6 +15,7 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,6 +27,11 @@ public class OpenApiConfig {
     @Bean
     OpenAPI authServerOpenAPI() {
         return new OpenAPI()
+                // Servers relativos: "Via API Gateway" (prefijo /auth) para la vista agregada;
+                // "Acceso directo" para los flujos OAuth2/OIDC contra el issuer real.
+                .servers(List.of(
+                        new Server().url("/auth").description("Via API Gateway"),
+                        new Server().url("/").description("Acceso directo (issuer OAuth2)")))
                 .info(new Info()
                         .title("Hermes Auth Server API")
                         .version("0.0.1")
