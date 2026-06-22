@@ -102,6 +102,11 @@ public class UserAccount {
         this.locked = locked;
     }
 
+    /** Reemplaza el hash de la contraseña (el llamante ya lo codificó). */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public UUID getId() {
         return id;
     }
