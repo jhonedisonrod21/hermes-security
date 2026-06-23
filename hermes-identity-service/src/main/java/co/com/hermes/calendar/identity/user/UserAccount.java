@@ -85,6 +85,11 @@ public class UserAccount {
         this.tenantId = tenantId;
     }
 
+    /** Fija el username (handle) del usuario; en el registro se deriva de la parte local del correo. */
+    public void assignUsername(String username) {
+        this.username = username;
+    }
+
     /** Fija el teléfono de contacto (normalizado por el llamante). */
     public void setPhone(String phone) {
         this.phone = phone;

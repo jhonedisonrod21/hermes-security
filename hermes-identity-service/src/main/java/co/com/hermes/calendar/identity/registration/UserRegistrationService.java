@@ -45,10 +45,24 @@ public class UserRegistrationService {
         // El invitado se registra como cuenta de plataforma (sin tenant). Unirse o crear una
         // organizacion es un paso posterior; no se aprovisiona ningun tenant en el registro.
         UserAccount user = UserAccount.registeredUser(UUID.randomUUID(), email, passwordEncoder.encode(request.password()), guestRole);
+        // El username (handle visible) es la parte local del correo (antes de la @), más ilustrativo
+        // que el UUID; se desambigua con un sufijo numérico si ya existe.
+        user.assignUsername(uniqueUsernameFrom(email));
         user.setPhone(normalizePhone(request.phone()));
 
         UserAccount saved = users.save(user);
-        return new UserRegistrationResponse(saved.getId(), saved.getEmail(), GUEST_USER_ROLE);
+        return new UserRegistrationResponse(saved.getId(), saved.getUsername(), saved.getEmail(), GUEST_USER_ROLE);
+    }
+
+    /** Deriva un username único a partir de la parte local del correo (p. ej. {@code ana.gomez}). */
+    private String uniqueUsernameFrom(String email) {
+        String base = email.substring(0, email.indexOf('@'));
+        String candidate = base;
+        int suffix = 1;
+        while (users.existsByUsernameIgnoreCase(candidate)) {
+            candidate = base + suffix++;
+        }
+        return candidate;
     }
 
     /** Recorta el teléfono y lo deja en {@code null} si viene vacío. */
