@@ -92,7 +92,7 @@ class TenantAdminServiceTest {
         when(tenants.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.update(id, new TenantUpdateRequest(
-                "X", "111", "CO", "Bogota", null, null, null)))
+                "X", "111", "CO", "Bogota", null, null, null, null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.NOT_FOUND);
     }

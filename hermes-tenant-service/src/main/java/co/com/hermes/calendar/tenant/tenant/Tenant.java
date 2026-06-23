@@ -49,6 +49,10 @@ public class Tenant {
     @Schema(description = "Descripcion del establecimiento.")
     private String description;
 
+    @Column(name = "time_zone", length = 60)
+    @Schema(description = "Zona horaria IANA (disponibilidad y recordatorios).", example = "America/Bogota")
+    private String timeZone;
+
     @Embedded
     @Schema(description = "Ubicacion georreferenciada (opcional).")
     private GeoLocation location;
@@ -116,6 +120,7 @@ public class Tenant {
             String city,
             String address,
             String description,
+            String timeZone,
             GeoLocation location
     ) {
         this.name = name;
@@ -124,6 +129,7 @@ public class Tenant {
         this.city = city;
         this.address = address;
         this.description = description;
+        this.timeZone = timeZone;
         this.location = location;
         this.updatedAt = OffsetDateTime.now();
     }
@@ -134,12 +140,17 @@ public class Tenant {
     }
 
     /** Edición acotada que puede hacer el TENANT_ADMIN sobre su propio establecimiento. */
-    public void editContactInfo(String taxId, String address, String description, GeoLocation location) {
+    public void editContactInfo(String taxId, String address, String description, String timeZone, GeoLocation location) {
         this.taxId = taxId;
         this.address = address;
         this.description = description;
+        this.timeZone = timeZone;
         this.location = location;
         this.updatedAt = OffsetDateTime.now();
+    }
+
+    public String getTimeZone() {
+        return timeZone;
     }
 
     public UUID getId() {

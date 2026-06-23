@@ -71,9 +71,24 @@ public class TenantAdminService {
                 request.city().trim(),
                 trimOrNull(request.address()),
                 trimOrNull(request.description()),
+                normalizeZone(request.timeZone()),
                 toGeoLocation(request.location())
         );
         return TenantResponse.from(tenant);
+    }
+
+    /** Valida que la zona horaria sea un IANA ZoneId; devuelve null si viene vacía. */
+    private static String normalizeZone(String timeZone) {
+        if (timeZone == null || timeZone.isBlank()) {
+            return null;
+        }
+        String trimmed = timeZone.trim();
+        try {
+            java.time.ZoneId.of(trimmed);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time zone: " + trimmed);
+        }
+        return trimmed;
     }
 
     @Transactional

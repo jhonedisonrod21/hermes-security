@@ -34,6 +34,8 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -59,6 +61,21 @@ import java.util.UUID;
 public class AuthorizationServerConfig {
 
     private static final String INTERNAL_KEY_HEADER = HermesInternalHeaders.INTERNAL_KEY;
+
+    /**
+     * Cadena dedicada al cambio de organización activa ({@code POST /session/switch-tenant}): se autentica
+     * con el bearer actual (resource server JWT del propio auth-server). Va antes que las demás.
+     */
+    @Bean
+    @Order(0)
+    SecurityFilterChain tenantSwitchSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher("/session/switch-tenant")
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
+                .build();
+    }
 
     @Bean
     @Order(1)
@@ -201,6 +218,12 @@ public class AuthorizationServerConfig {
     @Bean
     JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
+
+    /** Codificador para firmar el JWT re-emitido al cambiar de organización (misma clave RSA). */
+    @Bean
+    JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
     }
 
     @Bean

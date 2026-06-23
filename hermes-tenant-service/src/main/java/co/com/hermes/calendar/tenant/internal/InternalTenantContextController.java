@@ -69,6 +69,36 @@ public class InternalTenantContextController {
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User has no active tenant"));
 
+        return toContext(membership);
+    }
+
+    @GetMapping("/{userId}/tenant-context/{tenantId}")
+    @Operation(
+            summary = "Obtiene el contexto de un usuario en un tenant concreto",
+            description = "Valida que el usuario tenga membresia ACTIVE en ese tenant (y que el tenant este ACTIVE) y "
+                    + "devuelve roles y permisos efectivos. Lo usa Auth Server al cambiar de organizacion activa.",
+            security = @SecurityRequirement(name = "hermes-internal-key")
+    )
+    @ApiResponse(responseCode = "200", description = "Contexto encontrado.",
+            content = @Content(schema = @Schema(implementation = TenantContextResponse.class)))
+    @ApiResponse(responseCode = "404", description = "El usuario no es miembro activo de ese tenant.", content = @Content)
+    public TenantContextResponse tenantContext(
+            @Parameter(name = INTERNAL_KEY_HEADER, in = ParameterIn.HEADER, required = true,
+                    description = "Llave compartida para llamadas internas entre microservicios.")
+            @RequestHeader(name = INTERNAL_KEY_HEADER, required = false) String apiKey,
+            @PathVariable UUID userId,
+            @PathVariable UUID tenantId
+    ) {
+        assertInternalKey(apiKey);
+
+        TenantMembership membership = memberships.findByTenant_IdAndUserId(tenantId, userId)
+                .filter(m -> ACTIVE.equals(m.getStatus()) && m.getTenant().getStatus() == TenantStatus.ACTIVE)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User is not an active member of this tenant"));
+
+        return toContext(membership);
+    }
+
+    private static TenantContextResponse toContext(TenantMembership membership) {
         List<String> roles = membership.getRoles().stream()
                 .map(TenantRole::getName)
                 .sorted()
@@ -78,7 +108,6 @@ public class InternalTenantContextController {
                 .distinct()
                 .sorted()
                 .toList();
-
         return new TenantContextResponse(
                 membership.getTenant().getId(),
                 membership.getTenant().getSlug(),

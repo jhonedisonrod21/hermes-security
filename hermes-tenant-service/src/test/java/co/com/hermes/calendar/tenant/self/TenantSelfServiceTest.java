@@ -98,10 +98,11 @@ class TenantSelfServiceTest {
         when(tenants.findById(tenantId)).thenReturn(Optional.of(tenant));
 
         var response = service.updateContact(tenantId,
-                new TenantContactUpdateRequest("900123456-7", "Nueva direccion", "Cafe renovado", null));
+                new TenantContactUpdateRequest("900123456-7", "Nueva direccion", "Cafe renovado", "America/Bogota", null));
 
         assertThat(response.address()).isEqualTo("Nueva direccion");
         assertThat(response.description()).isEqualTo("Cafe renovado");
+        assertThat(response.timeZone()).isEqualTo("America/Bogota");
         assertThat(tenant.getAddress()).isEqualTo("Nueva direccion");
     }
 }

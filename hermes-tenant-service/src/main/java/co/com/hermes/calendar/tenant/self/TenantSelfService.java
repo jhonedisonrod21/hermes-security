@@ -58,8 +58,23 @@ public class TenantSelfService {
         GeoLocation location = request.location() == null
                 ? null
                 : new GeoLocation(request.location().latitude(), request.location().longitude());
-        tenant.editContactInfo(taxId, trimOrNull(request.address()), trimOrNull(request.description()), location);
+        tenant.editContactInfo(taxId, trimOrNull(request.address()), trimOrNull(request.description()),
+                normalizeZone(request.timeZone()), location);
         return TenantResponse.from(tenant);
+    }
+
+    /** Valida que la zona horaria sea un IANA ZoneId; devuelve null si viene vacía. */
+    private static String normalizeZone(String timeZone) {
+        if (timeZone == null || timeZone.isBlank()) {
+            return null;
+        }
+        String trimmed = timeZone.trim();
+        try {
+            java.time.ZoneId.of(trimmed);
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time zone: " + trimmed);
+        }
+        return trimmed;
     }
 
     @Transactional(readOnly = true)

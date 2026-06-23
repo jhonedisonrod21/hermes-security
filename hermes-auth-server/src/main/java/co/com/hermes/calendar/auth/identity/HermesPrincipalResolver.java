@@ -65,6 +65,29 @@ public class HermesPrincipalResolver {
                 .orElseGet(() -> platformPrincipal(user)));
     }
 
+    /**
+     * Construye el principal del usuario para un tenant <b>concreto</b> (cambio de organización activa).
+     * Vacío si el usuario no es miembro activo de ese tenant. El llamante valida aparte que la cuenta
+     * no esté anclada a plataforma.
+     */
+    public Optional<HermesUserPrincipal> resolveForTenant(CredentialVerificationResponse user, UUID tenantId) {
+        if (user == null || !user.authenticated() || !user.enabled() || user.locked()) {
+            return Optional.empty();
+        }
+        return membershipInTenant(user.userId(), tenantId).map(context -> tenantPrincipal(user, context));
+    }
+
+    /** Contexto del usuario en un tenant concreto, o vacío si no es miembro activo (404). */
+    private Optional<TenantContextResponse> membershipInTenant(UUID userId, UUID tenantId) {
+        TenantContextResponse context = tenantClient.get()
+                .uri("/internal/users/{userId}/tenant-context/{tenantId}", userId, tenantId)
+                .header(INTERNAL_KEY_HEADER, properties.internalApiKey())
+                .retrieve()
+                .onStatus(status -> status.value() == NOT_FOUND, (request, response) -> { })
+                .body(TenantContextResponse.class);
+        return context == null || context.tenantId() == null ? Optional.empty() : Optional.of(context);
+    }
+
     /** Membresía/tenant por defecto del usuario, o vacío si no tiene ninguna activa (404). */
     private Optional<TenantContextResponse> activeMembership(UUID userId) {
         TenantContextResponse context = tenantClient.get()

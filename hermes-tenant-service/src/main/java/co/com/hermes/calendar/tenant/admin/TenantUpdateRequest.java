@@ -14,6 +14,7 @@ public record TenantUpdateRequest(
         @NotBlank @Size(max = 120) String city,
         @Size(max = 200) String address,
         @Size(max = 500) String description,
+        @Size(max = 60) @Schema(description = "Zona horaria IANA.", example = "America/Bogota") String timeZone,
         @Valid GeoPointDto location
 ) {
 }
