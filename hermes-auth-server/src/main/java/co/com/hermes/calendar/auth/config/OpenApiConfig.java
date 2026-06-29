@@ -24,11 +24,13 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
+    private static final String TYPE_STRING = "string";
+
     @Bean
     OpenAPI authServerOpenAPI() {
         return new OpenAPI()
-                // Servers relativos: "Via API Gateway" (prefijo /auth) para la vista agregada;
-                // "Acceso directo" para los flujos OAuth2/OIDC contra el issuer real.
+                // Se publican dos servidores relativos: uno tras el gateway para la vista agregada y otro
+                // de acceso directo al issuer real para los flujos OAuth2 y OIDC.
                 .servers(List.of(
                         new Server().url("/auth").description("Via API Gateway"),
                         new Server().url("/").description("Acceso directo (issuer OAuth2)")))
@@ -78,9 +80,9 @@ public class OpenApiConfig {
     private PathItem loginPath() {
         Schema<?> loginSchema = new Schema<>()
                 .type("object")
-                .addProperty("username", new Schema<>().type("string").example("admin@hermes.local"))
-                .addProperty("password", new Schema<>().type("string").format("password").example("admin123"))
-                .addProperty("_csrf", new Schema<>().type("string").description("Token CSRF generado por Spring Security."));
+                .addProperty("username", new Schema<>().type(TYPE_STRING).example("admin@hermes.local"))
+                .addProperty("password", new Schema<>().type(TYPE_STRING).format("password").example("admin123"))
+                .addProperty("_csrf", new Schema<>().type(TYPE_STRING).description("Token CSRF generado por Spring Security."));
 
         return new PathItem()
                 .get(new Operation()
@@ -102,10 +104,10 @@ public class OpenApiConfig {
     private PathItem tokenPath() {
         Schema<?> tokenSchema = new Schema<>()
                 .type("object")
-                .addProperty("grant_type", new Schema<>().type("string").example("authorization_code"))
-                .addProperty("code", new Schema<>().type("string").description("Authorization code recibido en redirect_uri."))
-                .addProperty("redirect_uri", new Schema<>().type("string").example("https://oauth.pstmn.io/v1/callback"))
-                .addProperty("code_verifier", new Schema<>().type("string").example("hermes-local-code-verifier-123456789012345678901234567890"));
+                .addProperty("grant_type", new Schema<>().type(TYPE_STRING).example("authorization_code"))
+                .addProperty("code", new Schema<>().type(TYPE_STRING).description("Authorization code recibido en redirect_uri."))
+                .addProperty("redirect_uri", new Schema<>().type(TYPE_STRING).example("https://oauth.pstmn.io/v1/callback"))
+                .addProperty("code_verifier", new Schema<>().type(TYPE_STRING).example("hermes-local-code-verifier-123456789012345678901234567890"));
 
         return new PathItem().post(new Operation()
                 .tags(List.of("OAuth2 Authorization Code"))
@@ -153,7 +155,7 @@ public class OpenApiConfig {
                 .name(name)
                 .description(description)
                 .required(required)
-                .schema(new Schema<>().type("string").example(example));
+                .schema(new Schema<>().type(TYPE_STRING).example(example));
     }
 
     private Content form(Schema<?> schema) {

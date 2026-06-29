@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -60,7 +61,7 @@ public class TenantMembership {
         membership.userId = userId;
         membership.tenant = tenant;
         membership.status = "ACTIVE";
-        membership.createdAt = OffsetDateTime.now();
+        membership.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
         membership.roles.add(role);
         return membership;
     }

@@ -2,6 +2,7 @@ package co.com.hermes.calendar.tenant.admin;
 
 import co.com.hermes.calendar.tenant.tenant.GeoLocation;
 import co.com.hermes.calendar.tenant.tenant.Tenant;
+import co.com.hermes.calendar.tenant.tenant.TenantProfile;
 import co.com.hermes.calendar.tenant.tenant.TenantRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,12 +38,15 @@ public class TenantAdminService {
                 UUID.randomUUID(),
                 uniqueSlug(request.name()),
                 request.name().trim(),
-                taxId,
-                normalizeCountry(request.country()),
-                request.city().trim(),
-                trimOrNull(request.address()),
-                trimOrNull(request.description()),
-                toGeoLocation(request.location())
+                new TenantProfile(
+                        taxId,
+                        normalizeCountry(request.country()),
+                        request.city().trim(),
+                        trimOrNull(request.address()),
+                        trimOrNull(request.description()),
+                        null,
+                        toGeoLocation(request.location())
+                )
         );
         return TenantResponse.from(tenants.save(tenant));
     }
@@ -66,13 +70,15 @@ public class TenantAdminService {
         }
         tenant.update(
                 request.name().trim(),
-                taxId,
-                normalizeCountry(request.country()),
-                request.city().trim(),
-                trimOrNull(request.address()),
-                trimOrNull(request.description()),
-                normalizeZone(request.timeZone()),
-                toGeoLocation(request.location())
+                new TenantProfile(
+                        taxId,
+                        normalizeCountry(request.country()),
+                        request.city().trim(),
+                        trimOrNull(request.address()),
+                        trimOrNull(request.description()),
+                        normalizeZone(request.timeZone()),
+                        toGeoLocation(request.location())
+                )
         );
         return TenantResponse.from(tenant);
     }
@@ -85,7 +91,7 @@ public class TenantAdminService {
         String trimmed = timeZone.trim();
         try {
             java.time.ZoneId.of(trimmed);
-        } catch (Exception ex) {
+        } catch (Exception _) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time zone: " + trimmed);
         }
         return trimmed;

@@ -95,7 +95,9 @@ class PasswordResetServiceTest {
         when(users.findByUsernameIgnoreCaseOrEmailIgnoreCase(anyString(), anyString())).thenReturn(Optional.of(u));
         // No podemos forzar el token aleatorio; en su lugar construimos el token con el hash que el
         // servicio espera reusando su misma función a través de un token conocido.
-        return PasswordResetToken.issue(userId, sha256(rawToken), OffsetDateTime.now().plusMinutes(30));
+        // Expiración fija lejana: el token nunca caduca durante el test (sin depender del reloj del sistema).
+        OffsetDateTime farFuture = OffsetDateTime.of(2999, 1, 1, 0, 0, 0, 0, java.time.ZoneOffset.UTC);
+        return PasswordResetToken.issue(userId, sha256(rawToken), farFuture);
     }
 
     private static String sha256(String value) {

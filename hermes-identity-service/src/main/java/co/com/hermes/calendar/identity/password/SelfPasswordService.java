@@ -35,7 +35,7 @@ public class SelfPasswordService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            audit.record(userId, SecurityAuditService.PASSWORD_CHANGE,
+            audit.recordEvent(userId, SecurityAuditService.PASSWORD_CHANGE,
                     SecurityAuditService.Outcome.FAILURE, "contraseña actual incorrecta");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña actual no es correcta");
         }
@@ -44,7 +44,7 @@ public class SelfPasswordService {
         }
 
         user.changePassword(passwordEncoder.encode(newPassword));
-        audit.record(userId, SecurityAuditService.PASSWORD_CHANGE,
+        audit.recordEvent(userId, SecurityAuditService.PASSWORD_CHANGE,
                 SecurityAuditService.Outcome.SUCCESS, null);
     }
 }

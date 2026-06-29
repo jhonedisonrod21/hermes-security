@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /**
@@ -43,7 +44,7 @@ public class PasswordResetToken {
         token.userId = userId;
         token.tokenHash = tokenHash;
         token.expiresAt = expiresAt;
-        token.createdAt = OffsetDateTime.now();
+        token.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
         return token;
     }
 
@@ -56,7 +57,7 @@ public class PasswordResetToken {
     }
 
     public void markUsed() {
-        this.usedAt = OffsetDateTime.now();
+        this.usedAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
 
     public UUID getUserId() {

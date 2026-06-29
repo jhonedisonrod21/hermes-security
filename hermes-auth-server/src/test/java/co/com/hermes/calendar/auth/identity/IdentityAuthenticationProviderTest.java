@@ -12,7 +12,6 @@ import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -119,9 +118,9 @@ class IdentityAuthenticationProviderTest {
                 builder
         );
 
-        assertThatThrownBy(() -> provider.authenticate(
-                UsernamePasswordAuthenticationToken.unauthenticated("ada@hermes.test", "bad-secret")
-        )).isInstanceOf(BadCredentialsException.class)
+        var token = UsernamePasswordAuthenticationToken.unauthenticated("ada@hermes.test", "bad-secret");
+        assertThatThrownBy(() -> provider.authenticate(token))
+                .isInstanceOf(BadCredentialsException.class)
                 .hasMessage("Invalid credentials");
 
         server.verify();

@@ -106,12 +106,8 @@ public class HermesPrincipalResolver {
         return new HermesUserPrincipal(
                 user.userId(),
                 AccountScope.PLATFORM,
-                null,
-                null,
-                null,
-                user.username(),
-                user.email(),
-                user.name(),
+                new HermesUserPrincipal.TenantRef(null, null, null),
+                new HermesUserPrincipal.UserProfile(user.username(), user.email(), user.name()),
                 user.roles(),
                 user.permissions(),
                 roleAuthorities(user.roles())
@@ -122,12 +118,8 @@ public class HermesPrincipalResolver {
         return new HermesUserPrincipal(
                 user.userId(),
                 AccountScope.TENANT,
-                context.tenantId(),
-                context.tenantSlug(),
-                context.tenantName(),
-                user.username(),
-                user.email(),
-                user.name(),
+                new HermesUserPrincipal.TenantRef(context.tenantId(), context.tenantSlug(), context.tenantName()),
+                new HermesUserPrincipal.UserProfile(user.username(), user.email(), user.name()),
                 context.roles(),
                 context.permissions(),
                 roleAuthorities(context.roles())

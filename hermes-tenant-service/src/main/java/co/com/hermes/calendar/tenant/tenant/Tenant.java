@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -74,29 +75,14 @@ public class Tenant {
     }
 
     /** Alta de un establecimiento por el administrador del sistema. */
-    public static Tenant register(
-            UUID id,
-            String slug,
-            String name,
-            String taxId,
-            String country,
-            String city,
-            String address,
-            String description,
-            GeoLocation location
-    ) {
+    public static Tenant register(UUID id, String slug, String name, TenantProfile profile) {
         Tenant tenant = new Tenant();
         tenant.id = id;
         tenant.slug = slug;
         tenant.name = name;
-        tenant.taxId = taxId;
-        tenant.country = country;
-        tenant.city = city;
-        tenant.address = address;
-        tenant.description = description;
-        tenant.location = location;
+        tenant.applyProfile(profile);
         tenant.status = TenantStatus.ACTIVE;
-        tenant.createdAt = OffsetDateTime.now();
+        tenant.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
         tenant.updatedAt = tenant.createdAt;
         return tenant;
     }
@@ -108,35 +94,30 @@ public class Tenant {
         tenant.slug = slug;
         tenant.name = name;
         tenant.status = TenantStatus.ACTIVE;
-        tenant.createdAt = OffsetDateTime.now();
+        tenant.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
         tenant.updatedAt = tenant.createdAt;
         return tenant;
     }
 
-    public void update(
-            String name,
-            String taxId,
-            String country,
-            String city,
-            String address,
-            String description,
-            String timeZone,
-            GeoLocation location
-    ) {
+    public void update(String name, TenantProfile profile) {
         this.name = name;
-        this.taxId = taxId;
-        this.country = country;
-        this.city = city;
-        this.address = address;
-        this.description = description;
-        this.timeZone = timeZone;
-        this.location = location;
-        this.updatedAt = OffsetDateTime.now();
+        applyProfile(profile);
+        this.updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
+    }
+
+    private void applyProfile(TenantProfile profile) {
+        this.taxId = profile.taxId();
+        this.country = profile.country();
+        this.city = profile.city();
+        this.address = profile.address();
+        this.description = profile.description();
+        this.timeZone = profile.timeZone();
+        this.location = profile.location();
     }
 
     public void changeStatus(TenantStatus status) {
         this.status = status;
-        this.updatedAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
 
     /** Edición acotada que puede hacer el TENANT_ADMIN sobre su propio establecimiento. */
@@ -147,7 +128,7 @@ public class Tenant {
         this.description = description;
         this.timeZone = timeZone;
         this.location = location;
-        this.updatedAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
 
     public String getTimeZone() {

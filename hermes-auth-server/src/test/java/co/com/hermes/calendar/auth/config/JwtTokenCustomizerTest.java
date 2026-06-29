@@ -42,12 +42,8 @@ class JwtTokenCustomizerTest {
         HermesUserPrincipal principal = new HermesUserPrincipal(
                 userId,
                 AccountScope.TENANT,
-                tenantId,
-                "ada-company",
-                "Ada Company",
-                "ada@hermes.test",
-                "ada@hermes.test",
-                "Ada Lovelace",
+                new HermesUserPrincipal.TenantRef(tenantId, "ada-company", "Ada Company"),
+                new HermesUserPrincipal.UserProfile("ada@hermes.test", "ada@hermes.test", "Ada Lovelace"),
                 List.of("TENANT_ADMIN"),
                 List.of("calendar:read", "calendar:write"),
                 List.of(new SimpleGrantedAuthority("ROLE_TENANT_ADMIN"))

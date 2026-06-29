@@ -71,7 +71,7 @@ public class TenantSelfService {
         String trimmed = timeZone.trim();
         try {
             java.time.ZoneId.of(trimmed);
-        } catch (Exception ex) {
+        } catch (Exception _) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time zone: " + trimmed);
         }
         return trimmed;

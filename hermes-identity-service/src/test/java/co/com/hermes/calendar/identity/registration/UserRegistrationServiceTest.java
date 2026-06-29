@@ -2,7 +2,6 @@ package co.com.hermes.calendar.identity.registration;
 
 import co.com.hermes.calendar.identity.role.Role;
 import co.com.hermes.calendar.identity.role.RoleRepository;
-import co.com.hermes.calendar.identity.user.UserAccount;
 import co.com.hermes.calendar.identity.user.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;

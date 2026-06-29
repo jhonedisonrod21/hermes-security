@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 /** Evento de auditoría de seguridad de Identity (cambio de contraseña, etc.). Inmutable. */
@@ -41,7 +42,7 @@ public class SecurityAuditEvent {
         event.eventType = eventType;
         event.outcome = outcome;
         event.detail = detail;
-        event.occurredAt = OffsetDateTime.now();
+        event.occurredAt = OffsetDateTime.now(ZoneOffset.UTC);
         return event;
     }
 

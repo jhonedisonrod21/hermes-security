@@ -1,6 +1,7 @@
 package co.com.hermes.calendar.tenant.admin;
 
 import co.com.hermes.calendar.tenant.tenant.Tenant;
+import co.com.hermes.calendar.tenant.tenant.TenantProfile;
 import co.com.hermes.calendar.tenant.tenant.TenantRepository;
 import co.com.hermes.calendar.tenant.tenant.TenantStatus;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,8 @@ class TenantAdminServiceTest {
     void rejectsDuplicateTaxIdOnCreate() {
         when(tenants.existsByTaxId("900123456-7")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.create(sampleCreate()))
+        var create = sampleCreate();
+        assertThatThrownBy(() -> service.create(create))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.CONFLICT);
     }
@@ -77,7 +79,8 @@ class TenantAdminServiceTest {
     @Test
     void marksTenantInactive() {
         UUID id = UUID.randomUUID();
-        Tenant tenant = Tenant.register(id, "cafe-central", "Cafe Central", "900123456-7", "CO", "Bogota", null, null, null);
+        Tenant tenant = Tenant.register(id, "cafe-central", "Cafe Central",
+                new TenantProfile("900123456-7", "CO", "Bogota", null, null, null, null));
         when(tenants.findById(id)).thenReturn(Optional.of(tenant));
 
         TenantResponse response = service.changeStatus(id, new TenantStatusUpdateRequest(TenantStatus.INACTIVE));
@@ -91,8 +94,8 @@ class TenantAdminServiceTest {
         UUID id = UUID.randomUUID();
         when(tenants.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update(id, new TenantUpdateRequest(
-                "X", "111", "CO", "Bogota", null, null, null, null)))
+        var request = new TenantUpdateRequest("X", "111", "CO", "Bogota", null, null, null, null);
+        assertThatThrownBy(() -> service.update(id, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.NOT_FOUND);
     }

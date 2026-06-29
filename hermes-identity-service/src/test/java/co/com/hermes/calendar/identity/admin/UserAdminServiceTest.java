@@ -12,7 +12,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,8 +23,7 @@ class UserAdminServiceTest {
     private UserAccount guest(UUID id) {
         Role role = mock(Role.class);
         when(role.getName()).thenReturn("GUEST_USER");
-        UserAccount user = UserAccount.registeredUser(id, "ada@hermes.test", "{noop}x", role);
-        return user;
+        return UserAccount.registeredUser(id, "ada@hermes.test", "{noop}x", role);
     }
 
     @Test
@@ -48,10 +46,11 @@ class UserAdminServiceTest {
         UUID id = UUID.randomUUID();
         UserAccount user = guest(id);
         when(users.findById(id)).thenReturn(Optional.of(user));
-        when(users.existsByUsernameIgnoreCaseAndIdNot(eq("ada.perez"), eq(id))).thenReturn(false);
+        when(users.existsByUsernameIgnoreCaseAndIdNot("ada.perez", id)).thenReturn(false);
         when(users.existsByEmailIgnoreCaseAndIdNot("taken@acme.test", id)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.update(id, new UserUpdateRequest("Ada Pérez", "ada.perez", "taken@acme.test", null)))
+        var request = new UserUpdateRequest("Ada Pérez", "ada.perez", "taken@acme.test", null);
+        assertThatThrownBy(() -> service.update(id, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.CONFLICT);
     }

@@ -1,6 +1,5 @@
 package co.com.hermes.calendar.identity.directory;
 
-import co.com.hermes.calendar.identity.user.UserAccount;
 import co.com.hermes.calendar.identity.user.UserAccountRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

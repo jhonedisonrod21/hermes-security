@@ -6,6 +6,7 @@ import co.com.hermes.calendar.tenant.membership.TenantMembershipRepository;
 import co.com.hermes.calendar.tenant.role.TenantRole;
 import co.com.hermes.calendar.tenant.role.TenantRoleRepository;
 import co.com.hermes.calendar.tenant.tenant.Tenant;
+import co.com.hermes.calendar.tenant.tenant.TenantProfile;
 import co.com.hermes.calendar.tenant.tenant.TenantRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -34,7 +35,8 @@ class TenantSelfServiceTest {
     private final UUID userId = UUID.randomUUID();
 
     private Tenant tenant() {
-        return Tenant.register(tenantId, "cafe-central", "Cafe Central", "900123456-7", "CO", "Bogota", null, null, null);
+        return Tenant.register(tenantId, "cafe-central", "Cafe Central",
+                new TenantProfile("900123456-7", "CO", "Bogota", null, null, null, null));
     }
 
     private TenantRole role(String name) {
@@ -62,7 +64,8 @@ class TenantSelfServiceTest {
         when(tenants.findById(tenantId)).thenReturn(Optional.of(tenant()));
         when(memberships.existsByTenant_IdAndUserId(tenantId, userId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.addPartner(tenantId, new PartnerCreateRequest(userId)))
+        var request = new PartnerCreateRequest(userId);
+        assertThatThrownBy(() -> service.addPartner(tenantId, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.CONFLICT);
     }
@@ -98,7 +101,7 @@ class TenantSelfServiceTest {
         when(tenants.findById(tenantId)).thenReturn(Optional.of(tenant));
 
         var response = service.updateContact(tenantId,
-                new TenantContactUpdateRequest("900123456-7", "Nueva direccion", "Cafe renovado", "America/Bogota", null));
+                new TenantContactUpdateRequest("900123456-7", null, "Nueva direccion", "Cafe renovado", "America/Bogota", null));
 
         assertThat(response.address()).isEqualTo("Nueva direccion");
         assertThat(response.description()).isEqualTo("Cafe renovado");

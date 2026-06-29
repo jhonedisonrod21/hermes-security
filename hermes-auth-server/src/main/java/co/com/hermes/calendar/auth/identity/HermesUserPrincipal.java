@@ -6,9 +6,18 @@ import org.springframework.security.core.userdetails.User;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class HermesUserPrincipal extends User {
+
+    /** Establecimiento al que pertenece el principal; todos los campos null si es de plataforma. */
+    public record TenantRef(UUID id, String slug, String name) {
+    }
+
+    /** Atributos humanos del usuario (login, contacto y nombre visible). */
+    public record UserProfile(String username, String email, String name) {
+    }
 
     private final UUID userId;
     private final AccountScope scope;
@@ -23,24 +32,20 @@ public class HermesUserPrincipal extends User {
     public HermesUserPrincipal(
             UUID userId,
             AccountScope scope,
-            UUID tenantId,
-            String tenantSlug,
-            String tenantName,
-            String username,
-            String email,
-            String name,
+            TenantRef tenant,
+            UserProfile profile,
             List<String> roles,
             List<String> permissions,
             Collection<? extends GrantedAuthority> authorities
     ) {
-        super(username, "N/A", true, true, true, true, authorities);
+        super(profile.username(), "N/A", true, true, true, true, authorities);
         this.userId = userId;
         this.scope = scope;
-        this.tenantId = tenantId;
-        this.tenantSlug = tenantSlug;
-        this.tenantName = tenantName;
-        this.email = email;
-        this.name = name;
+        this.tenantId = tenant.id();
+        this.tenantSlug = tenant.slug();
+        this.tenantName = tenant.name();
+        this.email = profile.email();
+        this.name = profile.name();
         this.roles = List.copyOf(roles);
         this.permissions = List.copyOf(permissions);
     }
@@ -79,5 +84,22 @@ public class HermesUserPrincipal extends User {
 
     public List<String> getPermissions() {
         return permissions;
+    }
+
+    // La identidad real es el userId; User.equals solo compara username, insuficiente en multi-tenant.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof HermesUserPrincipal that) || !super.equals(o)) {
+            return false;
+        }
+        return Objects.equals(userId, that.userId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), userId);
     }
 }

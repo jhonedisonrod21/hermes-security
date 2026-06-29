@@ -58,7 +58,8 @@ class TenantMembershipAdminServiceTest {
         when(tenants.findById(tenantId)).thenReturn(Optional.of(tenant()));
         when(memberships.existsByTenant_IdAndUserId(tenantId, userId)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.addMember(tenantId, new MembershipCreateRequest(userId, "TENANT_ADMIN")))
+        var request = new MembershipCreateRequest(userId, "TENANT_ADMIN");
+        assertThatThrownBy(() -> service.addMember(tenantId, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.CONFLICT);
     }
@@ -69,7 +70,8 @@ class TenantMembershipAdminServiceTest {
         when(memberships.existsByTenant_IdAndUserId(tenantId, userId)).thenReturn(false);
         when(roles.findByName("WIZARD")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.addMember(tenantId, new MembershipCreateRequest(userId, "wizard")))
+        var request = new MembershipCreateRequest(userId, "wizard");
+        assertThatThrownBy(() -> service.addMember(tenantId, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -78,7 +80,8 @@ class TenantMembershipAdminServiceTest {
     void rejectsMembershipForMissingTenant() {
         when(tenants.findById(tenantId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.addMember(tenantId, new MembershipCreateRequest(userId, "TENANT_ADMIN")))
+        var request = new MembershipCreateRequest(userId, "TENANT_ADMIN");
+        assertThatThrownBy(() -> service.addMember(tenantId, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode").isEqualTo(HttpStatus.NOT_FOUND);
     }

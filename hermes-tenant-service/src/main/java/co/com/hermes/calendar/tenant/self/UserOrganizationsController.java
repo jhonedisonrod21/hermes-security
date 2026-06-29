@@ -63,7 +63,7 @@ public class UserOrganizationsController {
         }
         try {
             return UUID.fromString(userId);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException _) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid user identity");
         }
     }

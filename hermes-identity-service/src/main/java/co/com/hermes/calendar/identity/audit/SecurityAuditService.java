@@ -31,7 +31,7 @@ public class SecurityAuditService {
      * intento de cambio de contraseña con la actual incorrecta debe quedar igualmente auditado).
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(UUID userId, String eventType, Outcome outcome, String detail) {
+    public void recordEvent(UUID userId, String eventType, Outcome outcome, String detail) {
         repository.save(SecurityAuditEvent.of(userId, eventType, outcome.name(), detail));
         log.info("event={} user={} outcome={} detail={}", eventType, userId, outcome, detail == null ? "" : detail);
     }

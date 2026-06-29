@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/session")
@@ -39,6 +40,9 @@ public class SessionLoginController {
         Authentication authentication = authenticationProvider.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.username(), request.password())
         );
+        if (authentication == null || !(authentication.getPrincipal() instanceof HermesUserPrincipal principal)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication failed");
+        }
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
@@ -49,7 +53,6 @@ public class SessionLoginController {
             httpRequest.changeSessionId();
         }
 
-        HermesUserPrincipal principal = (HermesUserPrincipal) authentication.getPrincipal();
         return new SessionLoginResponse(
                 principal.getUserId(),
                 principal.getTenantId(),

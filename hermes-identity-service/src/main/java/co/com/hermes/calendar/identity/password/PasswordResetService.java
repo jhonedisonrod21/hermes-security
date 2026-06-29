@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Locale;
@@ -75,7 +76,7 @@ public class PasswordResetService {
         UserAccount user = match.get();
         String rawToken = generateToken();
         tokens.save(PasswordResetToken.issue(user.getId(), sha256(rawToken),
-                OffsetDateTime.now().plusMinutes(ttlMinutes)));
+                OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(ttlMinutes)));
 
         String resetUrl = frontBaseUrl + "/reset-password?token=" + rawToken;
         notifications.sendPasswordResetEmail(user.getEmail(), user.getUsername(), resetUrl, ttlMinutes);
@@ -88,7 +89,7 @@ public class PasswordResetService {
     @Transactional
     public void confirmReset(String rawToken, String newPassword) {
         PasswordResetToken token = tokens.findByTokenHash(sha256(rawToken))
-                .filter(t -> !t.isUsed() && !t.isExpired(OffsetDateTime.now()))
+                .filter(t -> !t.isUsed() && !t.isExpired(OffsetDateTime.now(ZoneOffset.UTC)))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired token"));
 
         UserAccount user = users.findById(token.getUserId())

@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -80,7 +81,7 @@ public class UserAccount {
         user.passwordHash = passwordHash;
         user.enabled = true;
         user.locked = false;
-        user.createdAt = OffsetDateTime.now();
+        user.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
         user.roles.add(role);
         return user;
     }

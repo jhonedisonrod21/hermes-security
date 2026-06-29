@@ -45,7 +45,7 @@ class SelfPasswordServiceTest {
         service.changePassword(userId, "current", "newPass12");
 
         assertThat(u.getPasswordHash()).isEqualTo("HASH_NEW");
-        verify(audit).record(eq(userId), eq(SecurityAuditService.PASSWORD_CHANGE),
+        verify(audit).recordEvent(eq(userId), eq(SecurityAuditService.PASSWORD_CHANGE),
                 eq(SecurityAuditService.Outcome.SUCCESS), any());
     }
 
@@ -57,7 +57,7 @@ class SelfPasswordServiceTest {
         assertThatThrownBy(() -> service.changePassword(userId, "wrong", "newPass12"))
                 .isInstanceOf(ResponseStatusException.class);
 
-        verify(audit).record(eq(userId), eq(SecurityAuditService.PASSWORD_CHANGE),
+        verify(audit).recordEvent(eq(userId), eq(SecurityAuditService.PASSWORD_CHANGE),
                 eq(SecurityAuditService.Outcome.FAILURE), any());
         verify(encoder, never()).encode(any());
     }

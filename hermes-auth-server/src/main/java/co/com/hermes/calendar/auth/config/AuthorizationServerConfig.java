@@ -69,7 +69,7 @@ public class AuthorizationServerConfig {
      */
     @Bean
     @Order(0)
-    SecurityFilterChain tenantSwitchSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain tenantSwitchSecurityFilterChain(HttpSecurity http) {
         return http
                 .securityMatcher("/session/switch-tenant")
                 .csrf(AbstractHttpConfigurer::disable)
@@ -83,7 +83,7 @@ public class AuthorizationServerConfig {
     SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
             @Value("${hermes.web.login-url:http://127.0.0.1:5173}") String loginUrl
-    ) throws Exception {
+    ) {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 
@@ -106,7 +106,7 @@ public class AuthorizationServerConfig {
     SecurityFilterChain applicationSecurityFilterChain(
             HttpSecurity http,
             @Value("${hermes.web.login-url:http://127.0.0.1:5173}") String loginUrl
-    ) throws Exception {
+    ) {
         return http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/session/login"))
                 .authorizeHttpRequests(authorize -> authorize
@@ -162,13 +162,12 @@ public class AuthorizationServerConfig {
         return context -> {
             HermesUserPrincipal user = resolveHermesUserPrincipal(context, properties, principalResolver, identityClient);
             if (user != null) {
-                // IMPORTANTE: los claims deben usar SOLO tipos del allowlist del PolymorphicTypeValidator
-                // que usa Spring Authorization Server al persistir/releer la autorización (BD). En el grant
-                // refresh_token se relee esa autorización y la deserialización falla con 500 si algún claim
-                // tiene un tipo no permitido. Por eso:
-                //   - los UUID (user_id, tenant_id) se guardan como String (en JSON ya viajan como cadena);
-                //   - las listas (roles, permissions) se envuelven en ArrayList, porque List.of(...) produce
-                //     java.util.ImmutableCollections$ListN, que NO está en el allowlist (ArrayList sí).
+                // IMPORTANTE: los claims deben usar SOLO tipos del allowlist del PolymorphicTypeValidator que
+                // usa Spring Authorization Server al persistir y releer la autorización en base de datos. En el
+                // grant de refresh se relee esa autorización y la deserialización falla con error 500 si algún
+                // claim tiene un tipo no permitido. Por eso los identificadores se guardan como cadena (en JSON
+                // viajan así de todos modos) y las colecciones de roles y permisos se copian a una lista mutable,
+                // ya que la lista inmutable que devuelve la factoría estándar no figura en el allowlist.
                 // El JWT resultante es idéntico en ambos casos.
                 context.getClaims()
                         .subject(user.getUserId().toString())
@@ -202,12 +201,13 @@ public class AuthorizationServerConfig {
         if (principal != null && principal.getPrincipal() instanceof HermesUserPrincipal user) {
             return user;
         }
-        if (context.getAuthorization() == null || !StringUtils.hasText(context.getAuthorization().getPrincipalName())) {
+        var authorization = context.getAuthorization();
+        if (authorization == null || !StringUtils.hasText(authorization.getPrincipalName())) {
             return null;
         }
 
         CredentialVerificationResponse user = identityClient.get()
-                .uri("/internal/auth/users/{username}", context.getAuthorization().getPrincipalName())
+                .uri("/internal/auth/users/{username}", authorization.getPrincipalName())
                 .header(INTERNAL_KEY_HEADER, properties.internalApiKey())
                 .retrieve()
                 .body(CredentialVerificationResponse.class);

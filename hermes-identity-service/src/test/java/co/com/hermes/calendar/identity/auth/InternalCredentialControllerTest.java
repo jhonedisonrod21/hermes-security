@@ -120,10 +120,9 @@ class InternalCredentialControllerTest {
 
     @Test
     void rejectsInvalidInternalKey() {
-        assertThatThrownBy(() -> controller.verify(
-                "wrong-key",
-                new CredentialVerificationRequest("ada@hermes.test", "secret")
-        )).isInstanceOf(ResponseStatusException.class)
+        var request = new CredentialVerificationRequest("ada@hermes.test", "secret");
+        assertThatThrownBy(() -> controller.verify("wrong-key", request))
+                .isInstanceOf(ResponseStatusException.class)
                 .extracting("statusCode")
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
     }
