@@ -16,6 +16,7 @@ public class HermesUserPrincipal extends User {
     private final String tenantSlug;
     private final String tenantName;
     private final String email;
+    private final String name;
     private final List<String> roles;
     private final List<String> permissions;
 
@@ -27,6 +28,7 @@ public class HermesUserPrincipal extends User {
             String tenantName,
             String username,
             String email,
+            String name,
             List<String> roles,
             List<String> permissions,
             Collection<? extends GrantedAuthority> authorities
@@ -38,6 +40,7 @@ public class HermesUserPrincipal extends User {
         this.tenantSlug = tenantSlug;
         this.tenantName = tenantName;
         this.email = email;
+        this.name = name;
         this.roles = List.copyOf(roles);
         this.permissions = List.copyOf(permissions);
     }
@@ -64,6 +67,10 @@ public class HermesUserPrincipal extends User {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public List<String> getRoles() {

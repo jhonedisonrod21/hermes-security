@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "Campos que el TENANT_ADMIN puede modificar de su establecimiento.")
 public record TenantContactUpdateRequest(
         @NotBlank @Size(max = 40) @Schema(example = "900123456-7") String taxId,
+        @Size(max = 120) @Schema(example = "Bogotá") String city,
         @Size(max = 200) @Schema(example = "Cra 7 # 71-21") String address,
         @Size(max = 500) String description,
         @Size(max = 60) @Schema(description = "Zona horaria IANA.", example = "America/Bogota") String timeZone,

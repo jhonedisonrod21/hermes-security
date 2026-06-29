@@ -132,6 +132,7 @@ public class InternalCredentialController {
                 user.getTenantId(),
                 user.getUsername(),
                 user.getEmail(),
+                user.getName(),
                 roles,
                 permissions,
                 platformAnchored,

@@ -51,6 +51,7 @@ public class UserAdminService {
         }
         String phone = request.phone() == null || request.phone().trim().isEmpty() ? null : request.phone().trim();
         user.updateProfile(username, email, phone);
+        user.setName(request.name().trim());
         return UserResponse.from(user);
     }
 

@@ -47,6 +47,7 @@ class JwtTokenCustomizerTest {
                 "Ada Company",
                 "ada@hermes.test",
                 "ada@hermes.test",
+                "Ada Lovelace",
                 List.of("TENANT_ADMIN"),
                 List.of("calendar:read", "calendar:write"),
                 List.of(new SimpleGrantedAuthority("ROLE_TENANT_ADMIN"))
@@ -70,10 +71,11 @@ class JwtTokenCustomizerTest {
         JwtClaimsSet claims = context.getClaims().build();
         assertThat(claims.getSubject()).isEqualTo(userId.toString());
         assertThat((Object) claims.getClaim("account_scope")).isEqualTo("TENANT");
-        assertThat((Object) claims.getClaim("user_id")).isEqualTo(userId);
+        assertThat((Object) claims.getClaim("user_id")).isEqualTo(userId.toString());
         assertThat((Object) claims.getClaim("preferred_username")).isEqualTo("ada@hermes.test");
         assertThat((Object) claims.getClaim("email")).isEqualTo("ada@hermes.test");
-        assertThat((Object) claims.getClaim("tenant_id")).isEqualTo(tenantId);
+        assertThat((Object) claims.getClaim("name")).isEqualTo("Ada Lovelace");
+        assertThat((Object) claims.getClaim("tenant_id")).isEqualTo(tenantId.toString());
         assertThat((Object) claims.getClaim("tenant_slug")).isEqualTo("ada-company");
         assertThat((Object) claims.getClaim("tenant_name")).isEqualTo("Ada Company");
         assertThat((List<String>) claims.getClaim("roles")).containsExactly("TENANT_ADMIN");
@@ -132,7 +134,7 @@ class JwtTokenCustomizerTest {
 
         JwtClaimsSet claims = context.getClaims().build();
         assertThat(claims.getSubject()).isEqualTo(userId.toString());
-        assertThat((Object) claims.getClaim("tenant_id")).isEqualTo(tenantId);
+        assertThat((Object) claims.getClaim("tenant_id")).isEqualTo(tenantId.toString());
         assertThat((List<String>) claims.getClaim("roles")).containsExactly("TENANT_ADMIN");
         assertThat((List<String>) claims.getClaim("permissions")).containsExactly("calendar:read");
 

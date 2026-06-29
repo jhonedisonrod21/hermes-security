@@ -34,7 +34,7 @@ class UserRegistrationServiceTest {
         when(users.existsByUsernameIgnoreCase("ana.gomez")).thenReturn(false);
 
         UserRegistrationResponse response = service.register(
-                new UserRegistrationRequest("Ana.Gomez@Acme.test", "secret123", null));
+                new UserRegistrationRequest("Ana Gómez", "Ana.Gomez@Acme.test", "secret123", null));
 
         assertThat(response.username()).isEqualTo("ana.gomez");
         assertThat(response.email()).isEqualTo("ana.gomez@acme.test");
@@ -48,7 +48,7 @@ class UserRegistrationServiceTest {
         when(users.existsByUsernameIgnoreCase("ana1")).thenReturn(false);
 
         UserRegistrationResponse response = service.register(
-                new UserRegistrationRequest("ana@other.test", "secret123", null));
+                new UserRegistrationRequest("Ana Gómez", "ana@other.test", "secret123", null));
 
         assertThat(response.username()).isEqualTo("ana1");
     }

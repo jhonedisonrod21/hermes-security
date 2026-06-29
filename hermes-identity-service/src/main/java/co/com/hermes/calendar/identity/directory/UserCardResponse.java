@@ -10,9 +10,10 @@ import java.util.UUID;
 public record UserCardResponse(
         @Schema(description = "Identificador del usuario.") UUID id,
         @Schema(description = "Username (handle) visible.", example = "ana.gomez") String username,
-        @Schema(description = "Correo del usuario.", example = "ana.gomez@acme.test") String email
+        @Schema(description = "Correo del usuario.", example = "ana.gomez@acme.test") String email,
+        @Schema(description = "Nombre visible del usuario.", example = "Ana Gómez") String name
 ) {
     public static UserCardResponse from(UserAccount user) {
-        return new UserCardResponse(user.getId(), user.getUsername(), user.getEmail());
+        return new UserCardResponse(user.getId(), user.getUsername(), user.getEmail(), user.getName());
     }
 }

@@ -140,8 +140,9 @@ public class Tenant {
     }
 
     /** Edición acotada que puede hacer el TENANT_ADMIN sobre su propio establecimiento. */
-    public void editContactInfo(String taxId, String address, String description, String timeZone, GeoLocation location) {
+    public void editContactInfo(String taxId, String city, String address, String description, String timeZone, GeoLocation location) {
         this.taxId = taxId;
+        this.city = city;
         this.address = address;
         this.description = description;
         this.timeZone = timeZone;

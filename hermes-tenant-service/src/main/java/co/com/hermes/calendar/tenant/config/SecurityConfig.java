@@ -33,6 +33,8 @@ public class SecurityConfig {
                                 "/actuator/info",
                                 "/error",
                                 "/internal/**",
+                                // Información pública de establecimientos (vitrina/exploración sin sesión).
+                                "/public/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**"

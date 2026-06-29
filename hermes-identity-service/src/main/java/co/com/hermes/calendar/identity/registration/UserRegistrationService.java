@@ -48,6 +48,7 @@ public class UserRegistrationService {
         // El username (handle visible) es la parte local del correo (antes de la @), más ilustrativo
         // que el UUID; se desambigua con un sufijo numérico si ya existe.
         user.assignUsername(uniqueUsernameFrom(email));
+        user.setName(request.name().trim());
         user.setPhone(normalizePhone(request.phone()));
 
         UserAccount saved = users.save(user);

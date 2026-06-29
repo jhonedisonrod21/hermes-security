@@ -7,6 +7,10 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "Solicitud publica para registrar un usuario con correo y password.")
 public record UserRegistrationRequest(
+        @Schema(description = "Nombre visible del usuario.", example = "Ana Gómez")
+        @NotBlank
+        @Size(max = 120)
+        String name,
         @Schema(description = "Correo electronico que sera usado como username.", example = "ana@acme.test")
         @Email
         @NotBlank

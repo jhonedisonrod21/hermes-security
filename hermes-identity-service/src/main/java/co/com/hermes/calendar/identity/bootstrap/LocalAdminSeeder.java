@@ -53,6 +53,7 @@ public class LocalAdminSeeder implements CommandLineRunner {
         }
         UserAccount admin = UserAccount.registeredUser(
                 ADMIN_ID, ADMIN_EMAIL, passwordEncoder.encode(ADMIN_PASSWORD), systemAdmin);
+        admin.setName("Administrador del sistema");
         users.save(admin);
         log.info("Seeded local SYSTEM_ADMIN account: {}", ADMIN_EMAIL);
     }

@@ -37,6 +37,10 @@ public class UserAccount {
     @Schema(description = "Email del usuario.", example = "admin@hermes.local")
     private String email;
 
+    @Column(length = 120)
+    @Schema(description = "Nombre visible del usuario (capturado en el registro).", example = "Ana Gómez")
+    private String name;
+
     @Column(length = 40)
     @Schema(description = "Telefono de contacto (para notificaciones por SMS).", example = "+573001112233")
     private String phone;
@@ -95,6 +99,11 @@ public class UserAccount {
         this.phone = phone;
     }
 
+    /** Fija el nombre visible del usuario (capturado en el registro). */
+    public void setName(String name) {
+        this.name = name;
+    }
+
     /** Actualiza el perfil editable por el administrador del sistema. */
     public void updateProfile(String username, String email, String phone) {
         this.username = username;
@@ -126,6 +135,10 @@ public class UserAccount {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getPhone() {

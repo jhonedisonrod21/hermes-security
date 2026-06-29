@@ -9,10 +9,10 @@ import java.util.UUID;
 
 /** Perfil propio del usuario autenticado. */
 @Schema(description = "Perfil del usuario autenticado.")
-public record SelfProfileResponse(UUID id, String username, String email, String phone, List<String> roles) {
+public record SelfProfileResponse(UUID id, String username, String email, String name, String phone, List<String> roles) {
 
     public static SelfProfileResponse from(UserAccount user) {
         List<String> roles = user.getRoles().stream().map(Role::getName).sorted().toList();
-        return new SelfProfileResponse(user.getId(), user.getUsername(), user.getEmail(), user.getPhone(), roles);
+        return new SelfProfileResponse(user.getId(), user.getUsername(), user.getEmail(), user.getName(), user.getPhone(), roles);
     }
 }

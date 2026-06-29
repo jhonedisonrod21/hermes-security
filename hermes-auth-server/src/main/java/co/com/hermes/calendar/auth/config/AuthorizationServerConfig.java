@@ -53,6 +53,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -161,17 +162,29 @@ public class AuthorizationServerConfig {
         return context -> {
             HermesUserPrincipal user = resolveHermesUserPrincipal(context, properties, principalResolver, identityClient);
             if (user != null) {
+                // IMPORTANTE: los claims deben usar SOLO tipos del allowlist del PolymorphicTypeValidator
+                // que usa Spring Authorization Server al persistir/releer la autorización (BD). En el grant
+                // refresh_token se relee esa autorización y la deserialización falla con 500 si algún claim
+                // tiene un tipo no permitido. Por eso:
+                //   - los UUID (user_id, tenant_id) se guardan como String (en JSON ya viajan como cadena);
+                //   - las listas (roles, permissions) se envuelven en ArrayList, porque List.of(...) produce
+                //     java.util.ImmutableCollections$ListN, que NO está en el allowlist (ArrayList sí).
+                // El JWT resultante es idéntico en ambos casos.
                 context.getClaims()
                         .subject(user.getUserId().toString())
-                        .claim("user_id", user.getUserId())
+                        .claim("user_id", user.getUserId().toString())
                         .claim("preferred_username", user.getUsername())
                         .claim("email", user.getEmail())
                         .claim("account_scope", user.getScope().name())
-                        .claim("roles", user.getRoles())
-                        .claim("permissions", user.getPermissions());
+                        .claim("roles", new ArrayList<>(user.getRoles()))
+                        .claim("permissions", new ArrayList<>(user.getPermissions()));
+                // El nombre puede faltar en cuentas anteriores a su introducción: solo se añade si existe.
+                if (user.getName() != null) {
+                    context.getClaims().claim("name", user.getName());
+                }
                 if (user.getTenantId() != null) {
                     context.getClaims()
-                            .claim("tenant_id", user.getTenantId())
+                            .claim("tenant_id", user.getTenantId().toString())
                             .claim("tenant_slug", user.getTenantSlug())
                             .claim("tenant_name", user.getTenantName());
                 }

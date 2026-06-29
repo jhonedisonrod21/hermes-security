@@ -37,6 +37,14 @@ public class UserDirectoryController {
         this.users = users;
     }
 
+    @GetMapping("/by-email")
+    @Operation(summary = "Ficha de un usuario por correo (para invitar miembros sin exponer el id)")
+    public UserCardResponse byEmail(@RequestParam(name = "email") String email) {
+        return users.findByEmailIgnoreCase(email.trim())
+                .map(UserCardResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Ficha de un usuario por id (nombre y correo)")
     public UserCardResponse get(@PathVariable UUID id) {

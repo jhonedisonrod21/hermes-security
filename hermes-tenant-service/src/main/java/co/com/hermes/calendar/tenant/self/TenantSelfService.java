@@ -58,8 +58,8 @@ public class TenantSelfService {
         GeoLocation location = request.location() == null
                 ? null
                 : new GeoLocation(request.location().latitude(), request.location().longitude());
-        tenant.editContactInfo(taxId, trimOrNull(request.address()), trimOrNull(request.description()),
-                normalizeZone(request.timeZone()), location);
+        tenant.editContactInfo(taxId, trimOrNull(request.city()), trimOrNull(request.address()),
+                trimOrNull(request.description()), normalizeZone(request.timeZone()), location);
         return TenantResponse.from(tenant);
     }
 

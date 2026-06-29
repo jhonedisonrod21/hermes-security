@@ -111,6 +111,7 @@ public class HermesPrincipalResolver {
                 null,
                 user.username(),
                 user.email(),
+                user.name(),
                 user.roles(),
                 user.permissions(),
                 roleAuthorities(user.roles())
@@ -126,6 +127,7 @@ public class HermesPrincipalResolver {
                 context.tenantName(),
                 user.username(),
                 user.email(),
+                user.name(),
                 context.roles(),
                 context.permissions(),
                 roleAuthorities(context.roles())
