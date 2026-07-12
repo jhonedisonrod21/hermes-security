@@ -2,9 +2,47 @@ plugins {
     id 'org.springframework.boot' version "${springBootVersion}" apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
     id 'org.sonarqube' version '6.2.0.5505'
+    id 'org.owasp.dependencycheck' version '12.1.0'
 }
 
 apply from: "${rootDir}/gradle/common-conventions.gradle"
+
+// Análisis de composición de software (SCA): busca CVEs conocidos en las dependencias
+// (OWASP Dependency-Check). Informe AGREGADO de todos los módulos del repo:
+//   ./gradlew dependencyCheckAggregate
+// Salida en build/reports/dependency-check (HTML para leer, JSON/SARIF para tooling).
+//
+// La clave de la API del NVD NO se versiona: se pasa con -PnvdApiKey=... o la variable
+// de entorno NVD_API_KEY. Sin clave, la descarga inicial de la base del NVD es MUY lenta
+// (rate-limit anónimo). Consigue una gratis en:
+//   https://nvd.nist.gov/developers/request-an-api-key
+def nvdApiKey = providers.gradleProperty('nvdApiKey')
+        .orElse(providers.environmentVariable('NVD_API_KEY'))
+        .getOrNull()
+
+dependencyCheck {
+    formats = ['HTML', 'JSON', 'SARIF']
+    outputDirectory = layout.buildDirectory.dir('reports/dependency-check').get().asFile.toString()
+    suppressionFile = "${rootDir}/dependency-check-suppression.xml"
+    // El objetivo es el informe; no rompemos el build. (Sube failBuildOnCVSS para hacerlo estricto.)
+    failBuildOnCVSS = 11
+    if (nvdApiKey) {
+        nvd {
+            apiKey = nvdApiKey
+        }
+    }
+    // Solo somos un proyecto Java/Gradle: desactivamos analizadores de otros ecosistemas para acelerar.
+    analyzers {
+        assemblyEnabled = false
+        msbuildEnabled = false
+        nodeEnabled = false
+        nodeAuditEnabled = false
+        nuspecEnabled = false
+        // OSS Index (servicio online de Sonatype) rate-limita/falla sin credenciales y tumba el análisis;
+        // el NVD ya es nuestra fuente principal. Reactivable con una cuenta Sonatype si se quiere más cobertura.
+        ossIndexEnabled = false
+    }
+}
 
 // Análisis estático y de vulnerabilidades (SonarQube Community, contenedor en
 // hermes-containers/sonarqube, UI http://localhost:9001). Un proyecto Sonar por

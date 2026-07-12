@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Supresiones de OWASP Dependency-Check para el backend de Hermes.
+  Cada <suppress> documenta el motivo (regla de auditoría). Solo falsos positivos revisados.
+  Enlazado desde build.gradle (dependencyCheck.suppressionFile).
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+  <suppress>
+    <notes><![CDATA[
+      FALSO POSITIVO (revisado 2026-07-12).
+      mxparser (io.github.x-stream:mxparser) es un pull-parser XML (fork de xpp3) que XStream utiliza
+      internamente, pero NO es XStream ni ejecuta su deserializacion. Dependency-Check le empareja el
+      CPE de XStream por la identidad del grupo "x-stream" y le arrastra los CVE de RCE de XStream
+      (2013-2022). No aplican a esta dependencia. Se suprime el CPE de XStream acotado a este paquete
+      (robusto ante futuros CVE de XStream); un eventual CVE propio de mxparser seguiria apareciendo.
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/io\.github\.x-stream/mxparser@.*$</packageUrl>
+    <cpe>cpe:/a:xstream:xstream</cpe>
+  </suppress>
+
+</suppressions>
