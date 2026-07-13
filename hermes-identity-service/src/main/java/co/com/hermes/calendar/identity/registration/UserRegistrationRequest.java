@@ -19,8 +19,8 @@ public record UserRegistrationRequest(
         @NotBlank
         @Size(max = 254)
         // Formato práctico: parte local sin caracteres extraños y dominio con TLD de 2+ letras.
-        // Más estricto que @Email (que acepta a@b sin TLD).
-        @Pattern(regexp = "^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$",
+        // Más estricto que @Email (que acepta a@b sin TLD). Sin cuantificadores anidados (evita ReDoS).
+        @Pattern(regexp = "^[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
                 message = "El correo no tiene un formato válido")
         String email,
         @Schema(description = "Password del usuario. Minimo 8 caracteres.", example = "localPass123")
@@ -30,7 +30,7 @@ public record UserRegistrationRequest(
         @Schema(description = "Telefono de contacto para notificaciones por SMS (opcional).", example = "+573001112233")
         @Size(max = 40)
         // Opcional: si viene, dígitos con + inicial opcional y separadores; el vacío también se admite.
-        @Pattern(regexp = "^$|^\\+?[0-9][0-9 ()-]{6,19}$",
+        @Pattern(regexp = "^$|^\\+?\\d[\\d ()-]{6,19}$",
                 message = "El teléfono solo admite dígitos, espacios y los signos + ( ) -")
         String phone
 ) {
