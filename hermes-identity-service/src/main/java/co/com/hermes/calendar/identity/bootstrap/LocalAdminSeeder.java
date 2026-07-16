@@ -16,14 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Crea el administrador del sistema SOLO en el perfil {@code local}. La credencial se inyecta desde
- * configuración ({@code hermes.local-admin.password}, definida únicamente en {@code application-local.yml}),
- * de modo que no hay ningún password en el código fuente. Las migraciones Flyway no siembran credenciales
- * (ver V1), así que dev/prod nunca arrancan con una cuenta de password conocido; allí el admin se da de
- * alta fuera de banda.
+ * Crea el administrador del sistema en los perfiles {@code local} y {@code dev} (este último, el despliegue
+ * contenerizado de prueba/PoC). La credencial se inyecta desde configuración ({@code hermes.local-admin.password}):
+ * en {@code local} tiene un valor de conveniencia (application-local.yml); en {@code dev} es obligatoria y
+ * llega por variable de entorno ({@code HERMES_LOCAL_ADMIN_PASSWORD}, fail-fast en identity-dev.yml), de modo
+ * que no hay ningún password en el código fuente. Las migraciones Flyway no siembran credenciales (ver V1);
+ * en producción no se activa este seeder y el admin se da de alta fuera de banda.
  */
 @Component
-@Profile("local")
+@Profile({"local", "dev"})
 public class LocalAdminSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(LocalAdminSeeder.class);

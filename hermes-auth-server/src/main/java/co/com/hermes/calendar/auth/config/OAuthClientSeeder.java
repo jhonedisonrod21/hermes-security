@@ -28,11 +28,14 @@ public class OAuthClientSeeder {
             @Value("${hermes.oauth.web-client.refresh-token-ttl:8h}") Duration refreshTokenTtl
     ) {
         return args -> {
-            if (clients.findByClientId(clientId) != null) {
-                return;
-            }
+            // Reconciliación (upsert): si el cliente ya existe se reutiliza su id, de modo que
+            // clients.save() lo ACTUALIZA con la config actual (redirect URIs, secreto, TTLs). Así un
+            // cambio en el .env (p. ej. el dominio/redirect al pasar a HTTPS) se refleja al reiniciar,
+            // en vez de quedar clavado el valor del primer arranque.
+            RegisteredClient existing = clients.findByClientId(clientId);
+            String id = existing != null ? existing.getId() : UUID.randomUUID().toString();
 
-            RegisteredClient webClient = RegisteredClient.withId(UUID.randomUUID().toString())
+            RegisteredClient webClient = RegisteredClient.withId(id)
                     .clientId(clientId)
                     .clientSecret(clientSecret)
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
